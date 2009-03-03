@@ -12,7 +12,7 @@
 		public function about()
 		{
 			return array('name' => 'CacheLite',
-						 'version' => '0.1',
+						 'version' => '0.1.1',
 						 'release-date' => '2009-03-03',
 						 'author' => array('name' => 'Max Wheeler',
 										   'website' => 'http://makenosound.com/',
@@ -24,14 +24,7 @@
 		public function uninstall()
 		{
 			# Remove preferences
-      if (class_exists('ConfigurationAccessor'))
-      {
-        ConfigurationAccessor::remove('cachelite');  
-      }        
-      else
-      {
-       $this->_Parent->Configuration->remove('cachelite');
-      }          
+      $this->_Parent->Configuration->remove('cachelite');
       $this->_Parent->saveConfig();
 		}
 		
@@ -58,6 +51,11 @@
 					'delegate' => 'AddCustomPreferenceFieldsets',
 					'callback' => 'append_preferences'
 				),
+				array(
+					'page' => '/system/preferences/',
+					'delegate' => 'Save',
+					'callback' => 'save_preferences'
+				),
 			);
 		}
 
@@ -78,7 +76,19 @@
 			$group->appendChild($label);
 			$group->appendChild(new XMLElement('p', 'Length of cache period in seconds.', array('class' => 'help')));
 			
+			$label = Widget::Label();
+			$input = Widget::Input('settings[cachelite][show-comments]', 'yes', 'checkbox');
+			if($this->_Parent->Configuration->get('show-comments', 'cachelite') == 'yes') $input->setAttribute('checked', 'checked');
+			$label->setValue($input->generate() . ' Show comments in page source?');
+			$group->appendChild($label);
 			$context['wrapper']->appendChild($group);
+		}
+		
+		public function save_preferences($context)
+		{
+      if(!isset($context['settings']['cachelite']['show-comments'])){
+				$context['settings']['cachelite']['show-comments'] = 'no';
+			}			
 		}
 
     /*-------------------------------------------------------------------------
@@ -92,9 +102,7 @@
             
       $url = getCurrentPage();
       $options = array(
-          # The directory you want to store the cache files in.
           'cacheDir' => CACHE . "/",
-          # Length of time to cache requests in seconds. "86400" = 24 hours. 
           'lifeTime' => $this->_get_lifetime()
       );
           
@@ -111,7 +119,7 @@
       else if ( ! $logged_in && $output = $cl->get($url))
       {
         print $output;
-        echo "<!-- Cache served: ". $cl->_fileName  ." -->";
+        if ($this->_get_comment_pref() == 'yes') echo "<!-- Cache served: ". $cl->_fileName  ." -->";
         exit();
       }
     }
@@ -125,9 +133,7 @@
         $render = $output['output'];
         $url = getCurrentPage();
         $options = array(
-            # The directory you want to store the cache files in.
             'cacheDir' => CACHE . "/",
-            # Length of time to cache requests in seconds. "86400" = 24 hours. 
             'lifeTime' => $this->_get_lifetime()
         );
         $cl = new Cache_Lite($options);
@@ -136,7 +142,7 @@
         }
         header(sprintf("Content-Length: %d", strlen($render)));
         print $render;
-        echo "<!-- Cache generated: ". $cl->_fileName  ." -->";
+        if ($this->_get_comment_pref() == 'yes') echo "<!-- Cache generated: ". $cl->_fileName  ." -->";
         exit();
       }
     }
@@ -148,13 +154,13 @@
   	private function _get_lifetime()
 		{
 		  $default_lifetime = 86400;
-			if (class_exists('ConfigurationAccessor'))
-			{
-			  $val = ConfigurationAccessor::get('lifetime', 'cachelite');
-				return (isset($val)) ? $val : $default_lifetime;
-			}
-				
       $val = $this->_Parent->Configuration->get('lifetime', 'cachelite');
 			return (isset($val)) ? $val : $default_lifetime;
 		}
+		
+		private function _get_comment_pref()
+		{
+      return $this->_Parent->Configuration->get('show-comments', 'cachelite');
+		}
+		
   }
