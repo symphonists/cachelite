@@ -99,13 +99,14 @@
     {
       $frontend = Frontend::instance();
       $logged_in = $frontend->isLoggedIn();
+      
+      $headers = $page['page']->_headers;
             
       $url = getCurrentPage();
       $options = array(
           'cacheDir' => CACHE . "/",
           'lifeTime' => $this->_get_lifetime()
       );
-          
       $cl = new Cache_Lite($options);
       
       if ($page['page']->_param['url-flush'] == 'site')
@@ -118,6 +119,10 @@
       }
       else if ( ! $logged_in && $output = $cl->get($url))
       {
+        # Ensure the original headers are served out
+        foreach ($headers as $header) {
+          header($header);
+        }
         print $output;
         if ($this->_get_comment_pref() == 'yes') echo "<!-- Cache served: ". $cl->_fileName  ." -->";
         exit();
