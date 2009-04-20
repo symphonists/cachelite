@@ -27,4 +27,4 @@ site you just need to append ?flush=site to any URL in the site.
 
 You can exclude URLs from the cache by adding them to the list of excluded pages
 in "System" -> "Preferences". Each URL must sit on a separate line and wildcards
-(*) may be used at the end of URLs to match *everything* below that URL.
+(\*) may be used at the end of URLs to match *everything* below that URL.
