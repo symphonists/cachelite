@@ -28,3 +28,11 @@ site you just need to append ?flush=site to any URL in the site.
 You can exclude URLs from the cache by adding them to the list of excluded pages
 in "System" -> "Preferences". Each URL must sit on a separate line and wildcards
 (\*) may be used at the end of URLs to match *everything* below that URL.
+
+Excluded pages are assumed to originate from the root. All the following
+examples will resolve to the same page:
+
+	/about-us/get-in-touch/*
+	http://root.com/about-us/get-in-touch/
+	about-us/get-in-touch*
+	/about-us/get*
