@@ -205,7 +205,7 @@
 				{
 					$r = str_replace('http://', NULL, $r);
 					$r = str_replace(DOMAIN . '/', NULL, $r);
-					if (substr($r, -1) != '/') $r = "/" . $r; # Make sure we're matching `/url/blah` not `url/blah
+					if (substr($r, 0) != '/') $r = "/" . $r; # Make sure we're matching `/url/blah` not `url/blah
 					if($r == '*')
 					{
 						$ignored = TRUE;
