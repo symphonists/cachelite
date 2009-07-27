@@ -12,13 +12,13 @@
 		public function about()
 		{
 			return array('name' => 'CacheLite',
-						 'version' => '0.1.3',
-						 'release-date' => '2009-06-22',
-						 'author' => array('name' => 'Max Wheeler',
+				'version' => '0.1.3',
+						'release-date' => '2009-06-22',
+						'author' => array('name' => 'Max Wheeler',
 											 'website' => 'http://makenosound.com/',
 											 'email' => 'max@makenosound.com'),
- 						 'description' => 'Allows for simple frontend caching using the CacheLite library.'
-				 		);
+						'description' => 'Allows for simple frontend caching using the CacheLite library.'
+			);
 		}		
 		
 		public function uninstall()
@@ -55,7 +55,17 @@
 					'callback' => 'append_preferences'
 				),
 				array(
+					'page' => '/system/preferences/success/',
+					'delegate' => 'AddCustomPreferenceFieldsets',
+					'callback' => 'append_preferences'
+				),
+				array(
 					'page' => '/system/preferences/',
+					'delegate' => 'Save',
+					'callback' => 'save_preferences'
+				),
+				array(
+					'page' => '/system/preferences/success/',
 					'delegate' => 'Save',
 					'callback' => 'save_preferences'
 				),
@@ -110,12 +120,12 @@
 			$frontend = Frontend::instance();
 			$logged_in = $frontend->isLoggedIn();
 			
-			$headers = $page['page']->_headers;
-						
+			$lifetime = $this->_get_lifetime();
+			
 			$url = getCurrentPage();
 			$options = array(
 					'cacheDir' => CACHE . "/",
-					'lifeTime' => $this->_get_lifetime()
+					'lifeTime' => $lifetime
 			);
 			$cl = new Cache_Lite($options);
 			
@@ -129,11 +139,18 @@
 			}
 			else if ( ! $logged_in && $output = $cl->get($url))
 			{
-				# Ensure the original headers are served out
-				foreach ($headers as $header) {
-					header($header);
-				}
-				print $output;
+				$modified = $cl->lastModified();
+				$maxage = $modified - time() + $lifetime;
+				
+				# Note: Change in 2.0.5 means we don't have access to original headers
+				# Construct some cache-specific headers
+				header('Content-Type: text/html; charset=utf-8');
+				header("Expires: " . gmdate("D, d M Y H:i:s", $modified + $lifetime) . " GMT");
+				header("Cache-Control: max-age=" . $maxage . ", must-revalidate");
+				header("Last-Modified: " . gmdate('D, d M Y H:i:s', $modified) . ' GMT');
+				header(sprintf('Content-Length: %d', strlen($output)));
+				
+				echo $output;
 				if ($this->_get_comment_pref() == 'yes') echo "<!-- Cache served: ". $cl->_fileName	." -->";
 				exit();
 			}
