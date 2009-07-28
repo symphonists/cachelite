@@ -1,7 +1,6 @@
 <?php
 
 	require_once('lib/class.cachelite.php');
-	require_once(CORE . '/class.frontend.php');
 	
 	Class extension_cachelite extends Extension
 	{	
@@ -12,8 +11,8 @@
 		public function about()
 		{
 			return array('name' => 'CacheLite',
-						 'version' => '0.1.3',
-						 'release-date' => '2009-06-22',
+						 'version' => '0.1.4',
+						 'release-date' => '2009-07-29',
 						 'author' => array('name' => 'Max Wheeler',
 											 'website' => 'http://makenosound.com/',
 											 'email' => 'max@makenosound.com'),
