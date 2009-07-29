@@ -189,9 +189,10 @@
 		private function _in_excluded_pages()
 		{
 			$segments = explode("/",$_SERVER['REQUEST_URI']);
+			$domain = explode("/", DOMAIN);
 			foreach($segments as $key => $segment)
 			{
-				if($segment == DOMAIN OR empty($segment)) unset($segments[$key]);
+				if(in_array($segment, $domain) OR empty($segment)) unset($segments[$key]);
 			}
 			$path = "/" . implode("/", $segments);
 			
@@ -204,7 +205,7 @@
 				{
 					$r = str_replace('http://', NULL, $r);
 					$r = str_replace(DOMAIN . '/', NULL, $r);
-					if (substr($r, 0) != '/') $r = "/" . $r; # Make sure we're matching `/url/blah` not `url/blah
+					$r = "/" . trim($r, "/"); # Make sure we're matching `/url/blah` not `url/blah					
 					if($r == '*')
 					{
 						$ignored = TRUE;
