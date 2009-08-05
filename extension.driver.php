@@ -1,4 +1,5 @@
 <?php
+
 	
 	Class extension_cachelite extends Extension
 	{
@@ -12,21 +13,21 @@
 			$this->_Parent =& $args['parent'];
 			$this->frontend = Frontend::instance();
 		}
-				
-	/*-------------------------------------------------------------------------
+		
+		/*-------------------------------------------------------------------------
 		Extension definition
-	-------------------------------------------------------------------------*/
+		-------------------------------------------------------------------------*/
 		public function about()
 		{
 			return array('name' => 'CacheLite',
-						 'version' => '0.1.6',
+						 'version' => '1.0.0',
 						 'release-date' => '2009-08-05',
 						 'author' => array('name' => 'Max Wheeler',
 											 'website' => 'http://makenosound.com/',
 											 'email' => 'max@makenosound.com'),
  						 'description' => 'Allows for simple frontend caching using the CacheLite library.'
 				 		);
-		}		
+		}
 		
 		public function uninstall()
 		{
@@ -48,7 +49,7 @@
 			return array(
 				array(
 					'page'		=> '/frontend/',
-					'delegate'	=> 'FrontendOutputPreGenerate',
+					'delegate'	=> 'FrontendPreRenderHeaders',
 					'callback'	=> 'intercept_page'
 				),
 				array(
@@ -111,60 +112,84 @@
 			Caching
 		-------------------------------------------------------------------------*/
 		
-		public function intercept_page(&$page)
+		public function intercept_page()
 		{
+			require_once(CORE . '/class.frontend.php');
+		
 			if($this->_in_excluded_pages()) return;
 			$logged_in = $this->frontend->isLoggedIn();
 			
-			$headers = $page['page']->_headers;
-			print_r($headers);
-						
+			# Check for headers() accessor method added in 2.0.6
+			$page = $this->frontend->Page();
+			$headers = $page->headers();
+			$lifetime = $this->_get_lifetime();
+			
 			$url = getCurrentPage();
 			$options = array(
 					'cacheDir' => CACHE . "/",
-					'lifeTime' => $this->_get_lifetime()
+					'lifeTime' => $lifetime
 			);
 			$cl = new Cache_Lite($options);
 			
-			if ($page['page']->_param['url-flush'] == 'site')
+			if ($logged_in && $page->_param['url-flush'] == 'site')
 			{
 				$cl->clean();
 			}
-			else if (array_key_exists('url-flush', $page['page']->_param))
+			else if ($logged_in && array_key_exists('url-flush', $page->_param))
 			{
 				$cl->remove($url);
 			}
 			else if ( ! $logged_in && $output = $cl->get($url))
 			{
+				# Add comment
+				if ($this->_get_comment_pref() == 'yes') $output .= "<!-- Cache served: ". $cl->_fileName	." -->";
+				
+				# Add some cache specific headers
+				$modified = $cl->lastModified();
+				$maxage = $modified - time() + $lifetime;
+
+				header("Expires: " . gmdate("D, d M Y H:i:s", $modified + $lifetime) . " GMT");
+				header("Cache-Control: max-age=" . $maxage . ", must-revalidate");
+				header("Last-Modified: " . gmdate('D, d M Y H:i:s', $modified) . ' GMT');
+				header(sprintf('Content-Length: %d', strlen($output)));
+			
 				# Ensure the original headers are served out
 				foreach ($headers as $header) {
 					header($header);
 				}
 				print $output;
-				if ($this->_get_comment_pref() == 'yes') echo "<!-- Cache served: ". $cl->_fileName	." -->";
 				exit();
 			}
 		}
 		
 		public function write_page_cache(&$output)
-		{				
+		{
 			if($this->_in_excluded_pages()) return;
 			$logged_in = $this->frontend->isLoggedIn();
 			if ( ! $logged_in)
 			{
 				$render = $output['output'];
 				$url = getCurrentPage();
+				$lifetime = $this->_get_lifetime();
+				
 				$options = array(
 						'cacheDir' => CACHE . "/",
-						'lifeTime' => $this->_get_lifetime()
+						'lifeTime' => $lifetime
 				);
 				$cl = new Cache_Lite($options);
 				if ( ! $cl->get($url)) {
 					$cl->save($render);
 				}
-				header(sprintf("Content-Length: %d", strlen($render)));
+				
+				# Add comment
+				if ($this->_get_comment_pref() == 'yes') $render .= "<!-- Cache generated: ". $cl->_fileName	." -->";
+				
+				header("Expires: " . gmdate("D, d M Y H:i:s", $lifetime) . " GMT");
+				header("Cache-Control: max-age=" . $lifetime . ", must-revalidate");
+				header("Last-Modified: " . gmdate('D, d M Y H:i:s', time()) . ' GMT');
+				header(sprintf('Content-Length: %d', strlen($render)));
+				
 				print $render;
-				if ($this->_get_comment_pref() == 'yes') echo "<!-- Cache generated: ". $cl->_fileName	." -->";
 				exit();
 			}
 		}
