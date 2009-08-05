@@ -1,9 +1,9 @@
 # CacheLite
  
-Version: 0.1.5
+Version: 0.1.6
 Author: [Max Wheeler](http://makenosound.com)  
-Build Date: 29 July 2009  
-Requirements: Symphony 2.0.1--2.0.4
+Build Date: 05 August 2009  
+Requirements: Symphony 2.0.1--2.0.3
 
 
 ## Installation
@@ -16,7 +16,7 @@ Requirements: Symphony 2.0.1--2.0.4
  
 3. Go to "System" -> "Preferences" and enter the cache period (in seconds).
 
-4. Profit.
+4. The output of your site will now be cached.
 
 
 ## Usage
@@ -36,3 +36,6 @@ examples will resolve to the same page:
 	http://root.com/about-us/get-in-touch/
 	about-us/get-in-touch*
 	/about-us/get*
+
+Note that caching is *not* done for logged in users. This lets you add administrative 
+tools to the frontend of your site without them being cached for normal users.

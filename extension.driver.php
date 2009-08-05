@@ -1,9 +1,17 @@
 <?php
-
-	require_once('lib/class.cachelite.php');
 	
 	Class extension_cachelite extends Extension
-	{	
+	{
+		protected $frontend;
+		
+		function __construct($args)
+		{
+			require_once('lib/class.cachelite.php');
+			require_once(CORE . '/class.frontend.php');
+		
+			$this->_Parent =& $args['parent'];
+			$this->frontend = Frontend::instance();
+		}
 				
 	/*-------------------------------------------------------------------------
 		Extension definition
@@ -11,8 +19,8 @@
 		public function about()
 		{
 			return array('name' => 'CacheLite',
-						 'version' => '0.1.5',
-						 'release-date' => '2009-07-29',
+						 'version' => '0.1.6',
+						 'release-date' => '2009-08-05',
 						 'author' => array('name' => 'Max Wheeler',
 											 'website' => 'http://makenosound.com/',
 											 'email' => 'max@makenosound.com'),
@@ -106,10 +114,10 @@
 		public function intercept_page(&$page)
 		{
 			if($this->_in_excluded_pages()) return;
-			$frontend = Frontend::instance();
-			$logged_in = $frontend->isLoggedIn();
+			$logged_in = $this->frontend->isLoggedIn();
 			
 			$headers = $page['page']->_headers;
+			print_r($headers);
 						
 			$url = getCurrentPage();
 			$options = array(
@@ -141,8 +149,7 @@
 		public function write_page_cache(&$output)
 		{				
 			if($this->_in_excluded_pages()) return;
-			$frontend = Frontend::instance();
-			$logged_in = $frontend->isLoggedIn();
+			$logged_in = $this->frontend->isLoggedIn();
 			if ( ! $logged_in)
 			{
 				$render = $output['output'];
