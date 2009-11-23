@@ -20,7 +20,7 @@
 		public function about()
 		{
 			return array('name' => 'CacheLite',
-						 'version' => '1.0.0',
+						 'version' => '1.0.1',
 						 'release-date' => '2009-08-05',
 						 'author' => array('name' => 'Max Wheeler',
 											 'website' => 'http://makenosound.com/',
@@ -124,12 +124,13 @@
 			$headers = $page->headers();
 			$lifetime = $this->_get_lifetime();
 			
-			$url = getCurrentPage();
+			$url = $page->_param['current-path'];
 			$options = array(
 					'cacheDir' => CACHE . "/",
 					'lifeTime' => $lifetime
 			);
 			$cl = new Cache_Lite($options);
+			
 			
 			if ($logged_in && $page->_param['url-flush'] == 'site')
 			{
@@ -168,8 +169,9 @@
 			$logged_in = $this->frontend->isLoggedIn();
 			if ( ! $logged_in)
 			{
-				$render = $output['output'];
-				$url = getCurrentPage();
+				$render = $output['output'];  
+				$page = $this->frontend->Page();
+				$url = $page->_param['current-path'];
 				$lifetime = $this->_get_lifetime();
 				
 				$options = array(

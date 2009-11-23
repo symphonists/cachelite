@@ -1,6 +1,6 @@
 # CacheLite
  
-Version: 1.0.0
+Version: 1.0.1
 Author: [Max Wheeler](http://makenosound.com)  
 Build Date: 05 August 2009  
 Requirements: Symphony 2.0.6+
