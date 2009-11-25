@@ -2,7 +2,7 @@
  
 Version: 1.0.2  
 Author: [Max Wheeler](http://makenosound.com), [Nick Dunn](http://nick-dunn.co.uk)  
-Build Date: 24 November 2009  
+Build Date: 25 November 2009  
 Requirements: Symphony 2.0.6+
 
 
