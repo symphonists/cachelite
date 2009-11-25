@@ -113,7 +113,17 @@
 					'page' => '/blueprints/events/edit/',
 					'delegate' => 'AppendEventFilter',
 					'callback' => 'addFilterToEventEditor'
-				),						
+				),
+				array(
+					'page' => '/blueprints/events/new/',
+					'delegate' => 'AppendEventFilterDocumentation',
+					'callback' => 'add_filter_documentation_to_event'
+				),					
+				array(
+					'page' => '/blueprints/events/edit/',
+					'delegate' => 'AppendEventFilterDocumentation',
+					'callback' => 'add_filter_documentation_to_event'
+				),
 				array(
 					'page' => '/frontend/',
 					'delegate' => 'EventPreSaveFilter',
@@ -193,7 +203,26 @@
 			if(in_array('cachelite-section', $context['event']->eParamFILTERS) && isset($_POST['cachelite']['flush-section'])) {
 				$this->clear_pages_by_reference($context['event']->getSource(), 'section');
 			}
-			
+		}
+		
+		public function add_filter_documentation_to_event($context)
+		{
+			if (in_array('cachelite-entry', $context['selected']) || in_array('cachelite-section', $context['selected'])) $context['documentation'][] = new XMLElement('h3', 'CacheLite: Expiring the cache');
+			if (in_array('cachelite-entry', $context['selected']))
+			{
+				$context['documentation'][] = new XMLElement('h4', 'Expire cache for pages showing this entry');
+				$context['documentation'][] = new XMLElement('p', 'When editing existing entries (one or many, supports the <em>Allow Multiple</em> option) any pages showing this entry will be flushed. Add the following in your form to trigger this filter:');
+				$code = '<input type="hidden" name="cachelite[flush-entry]" value="yes"/>';
+				$context['documentation'][] = contentBlueprintsEvents::processDocumentationCode($code);
+			}
+			if (in_array('cachelite-section', $context['selected']))
+			{
+				$context['documentation'][] = new XMLElement('h4', 'Expire cache for pages showing content from this section');
+				$context['documentation'][] = new XMLElement('p', 'This will flush the cache of pages using any entries from this event&#8217;s section. Since you may want to only run it when creating new entries, this will only run if you pass a specific field in your HTML:');
+				$code = '<input type="hidden" name="cachelite[flush-section]" value="yes"/>';
+				$context['documentation'][] = contentBlueprintsEvents::processDocumentationCode($code);
+			}
+			return;
 		}
 
 		/*-------------------------------------------------------------------------
