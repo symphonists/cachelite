@@ -1,8 +1,8 @@
 # CacheLite
  
-Version: 1.0.2  
+Version: 1.0.3  
 Author: [Max Wheeler](http://makenosound.com), [Nick Dunn](http://nick-dunn.co.uk)  
-Build Date: 25 November 2009  
+Build Date: 09 December 2009  
 Requirements: Symphony 2.0.6+
 
 
@@ -33,7 +33,7 @@ Note that caching is *not* done for logged in users. This lets you add administr
 
 Caching is done on a per-URL basis. To manually flush the cache for an individual page simply append `?flush` to the end of its URL. To flush the cache for the entire site you just need to append `?flush=site` to any URL in the site. You *must* be logged in to flush the cache.
 
-You can also remove cache files using your FTP client: navigate to `/manifest/config` and remove the files named as `cache_{hash}`.
+You can also remove cache files using your FTP client: navigate to `/manifest/cache` and remove the files named as `cache_{hash}`.
 
 The cache of each page will automatically flush itself after the timeout period is reached. The timeout period can be modified on the System > Preferences page.
 
@@ -63,3 +63,15 @@ This will flush the cache of pages using any entries from this event's *section*
 ## Compatibility
 
 Due to changes in the Symphony core, version 1.0.0+ of the CacheLite extension only works with Symphony 2.0.6+. Versions prior to 1.0.0 are compatible with Symphony 2.0.1-2.0.3. If you're using 2.0.4-5 then you should upgrade :p
+
+## Changelog
+
+### 1.0.3
+
+* Subscribe to the Delete delegate to flush pages when an entry is removed (delegate not included in Symphony 2.0.6) (Nick Dunn)
+* Fixed bug introduced in 1.0.2 where caching was occurring for logged in users
+* Fixed bug introduced in 1.0.2 where `?flush` was being included in the cache ID
+
+### 1.0.2
+
+* Added support for flushing the cache based on entry/section IDs (Nick Dunn)

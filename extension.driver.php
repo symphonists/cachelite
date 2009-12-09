@@ -32,8 +32,8 @@
 		public function about()
 		{
 			return array('name' => 'CacheLite',
-						 'version' => '1.0.2',
-						 'release-date' => '2009-11-24',
+						 'version' => '1.0.3',
+						 'release-date' => '2009-12-09',
 						 'author' => array('name' => 'Max Wheeler',
 											 'website' => 'http://makenosound.com/',
 											 'email' => 'max@makenosound.com'),
@@ -249,10 +249,13 @@
 			}
 			else if ($logged_in && array_key_exists('url-flush', $page->_param))
 			{
-				$this->_cacheLite->remove($this->_url);
+				$query = trim(preg_replace('/&?flush(\=[^&]+)?/i', NULL, $_SERVER['QUERY_STRING']), "&");
+				$request = $_SERVER['REQUEST_URI'];
+				$position = strpos($request, "?");
+				$url = ($position && isset($query)) ? substr($request, 0, $position) . "?$query" : $request;
+				$this->_cacheLite->remove($url);
 			}
-			//else if (!$logged_in && $output = $this->_cacheLite->get($this->_url))
-			else if ($output = $this->_cacheLite->get($this->_url))
+			else if ( ! $logged_in && $output = $this->_cacheLite->get($this->_url))
 			{
 				# Add comment
 				if ($this->_get_comment_pref() == 'yes') $output .= "<!-- Cache served: ". $this->_cacheLite->_fileName	." -->";
