@@ -105,6 +105,11 @@
 					'callback'	=> 'entry_edit'
 				),
 				array(
+					'page'		=> '/publish/',
+					'delegate'	=> 'Delete',
+					'callback'	=> 'entry_delete'
+				),
+				array(
 					'page' => '/blueprints/events/new/',
 					'delegate' => 'AppendEventFilter',
 					'callback' => 'addFilterToEventEditor'
@@ -332,6 +337,12 @@
 			if ($this->_Parent->Configuration->get('backend-delegates', 'cachelite') == 'no') return;
 			// flush by Entry ID
 			$this->clear_pages_by_reference($context['entry']->get('id'), 'entry');
+		}
+		
+		public function entry_delete($context) {
+			if ($this->_Parent->Configuration->get('backend-delegates', 'cachelite') == 'no') return;
+			// flush by Entry ID
+			$this->clear_pages_by_reference($context['entry_id'], 'entry');
 		}
 		
 		public function clear_pages_by_reference($id, $type) {
