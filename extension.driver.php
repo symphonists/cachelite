@@ -32,8 +32,8 @@
 		public function about()
 		{
 			return array('name' => 'CacheLite',
-						 'version' => '1.0.3',
-						 'release-date' => '2009-12-09',
+						 'version' => '1.0.4',
+						 'release-date' => '2009-12-17',
 						 'author' => array('name' => 'Max Wheeler',
 											 'website' => 'http://makenosound.com/',
 											 'email' => 'max@makenosound.com'),
@@ -134,6 +134,11 @@
 					'delegate' => 'EventPreSaveFilter',
 					'callback' => 'processEventData'
 				),
+				array(
+					'page' => '/frontend/',
+					'delegate' => 'EventPostSaveFilter',
+					'callback' => 'processPostSaveData'
+				),
 			);
 		}
 
@@ -189,6 +194,7 @@
 			// adds filters to Filters select box on Event editor page
 			$context['options'][] = array('cachelite-entry', @in_array('cachelite-entry', $context['selected']) ,'CacheLite: expire cache for pages showing this entry');
 			$context['options'][] = array('cachelite-section', @in_array('cachelite-section', $context['selected']) ,'CacheLite: expire cache for pages showing content from this section');
+			$context['options'][] = array('cachelite-url', @in_array('cachelite-url', $context['selected']) ,'CacheLite: expire cache for the passed URL');
 		}
 		
 		public function processEventData($context) {
@@ -209,6 +215,14 @@
 			}
 		}
 		
+		public function processPostSaveData($context) {
+			# flush the cache based on explicit value
+			if(in_array('cachelite-url', $context['event']->eParamFILTERS)) {
+				$flush = (empty($_POST['cachelite']['flush-url'])) ? $this->_url : General::sanitize($_POST['cachelite']['flush-url']);
+				$this->_cacheLite->remove($flush);
+			}
+		}
+		
 		public function add_filter_documentation_to_event($context)
 		{
 			if (in_array('cachelite-entry', $context['selected']) || in_array('cachelite-section', $context['selected'])) $context['documentation'][] = new XMLElement('h3', 'CacheLite: Expiring the cache');
@@ -224,6 +238,16 @@
 				$context['documentation'][] = new XMLElement('h4', 'Expire cache for pages showing content from this section');
 				$context['documentation'][] = new XMLElement('p', 'This will flush the cache of pages using any entries from this event&#8217;s section. Since you may want to only run it when creating new entries, this will only run if you pass a specific field in your HTML:');
 				$code = '<input type="hidden" name="cachelite[flush-section]" value="yes"/>';
+				$context['documentation'][] = contentBlueprintsEvents::processDocumentationCode($code);
+			}
+			if (in_array('cachelite-url', $context['selected']))
+			{
+				$context['documentation'][] = new XMLElement('h4', 'Expire cache for the passed URL');
+				$context['documentation'][] = new XMLElement('p', 'This will expire the cache of the URL at the value you pass it. For example');
+				$code = '<input type="hidden" name="cachelite[flush-url]" value="/article/123/"/>';
+				$context['documentation'][] = contentBlueprintsEvents::processDocumentationCode($code);
+				$context['documentation'][] = new XMLElement('p', 'Will flush the cache for <code>http://domain.tld/article/123/</code>. If no value is passed it will flush the cache of the current page (i.e., the value of <code>action=""</code> in you form):');
+				$code = '<input type="hidden" name="cachelite[flush-url]"/>';
 				$context['documentation'][] = contentBlueprintsEvents::processDocumentationCode($code);
 			}
 			return;
