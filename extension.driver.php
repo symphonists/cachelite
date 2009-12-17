@@ -262,13 +262,12 @@
 		
 			if($this->_in_excluded_pages()) return;
 			$logged_in = $this->_frontend->isLoggedIn();
-			$page = $this->_frontend->Page();
 			
-			if ($logged_in && $page->_param['url-flush'] == 'site')
+			if ($logged_in && array_key_exists('flush', $_GET) && $_GET['flush'] == 'site')
 			{
 				$this->_cacheLite->clean();
 			}
-			else if ($logged_in && array_key_exists('url-flush', $page->_param))
+			else if ($logged_in && array_key_exists('flush', $_GET))
 			{
 				$query = trim(preg_replace('/&?flush(\=[^&]+)?/i', NULL, $_SERVER['QUERY_STRING']), "&");
 				$request = $_SERVER['REQUEST_URI'];
