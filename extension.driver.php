@@ -32,7 +32,7 @@
 		public function about()
 		{
 			return array('name' => 'CacheLite',
-						 'version' => '1.0.4',
+						 'version' => '1.0.5',
 						 'release-date' => '2009-12-17',
 						 'author' => array('name' => 'Max Wheeler',
 											 'website' => 'http://makenosound.com/',
@@ -71,7 +71,7 @@
 			return array(
 				array(
 					'page'		=> '/frontend/',
-					'delegate'	=> 'FrontendPreRenderHeaders',
+					'delegate'	=> 'FrontendPageResolved',
 					'callback'	=> 'intercept_page'
 				),
 				array(
