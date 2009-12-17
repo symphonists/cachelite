@@ -80,6 +80,7 @@ Due to changes in the Symphony core, version 1.0.0+ of the CacheLite extension o
 ### 1.0.5 ###
 
 * Changed `intercept_page` delegate to `FrontendPageResolved`. Should now execute immediately after the Page is found, but before anything else happens.
+* Because of the change above, headers are determined manually (as with normal pages). Supported types are HTML, XML and JSON.
 
 ### 1.0.4 ###
 

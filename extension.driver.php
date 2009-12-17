@@ -257,15 +257,12 @@
 			Caching
 		-------------------------------------------------------------------------*/
 		
-		public function intercept_page() {
+		public function intercept_page($context) {
 			require_once(CORE . '/class.frontend.php');
 		
 			if($this->_in_excluded_pages()) return;
 			$logged_in = $this->_frontend->isLoggedIn();
-			
-			# Check for headers() accessor method added in 2.0.6
 			$page = $this->_frontend->Page();
-			$headers = $page->headers();
 			
 			if ($logged_in && $page->_param['url-flush'] == 'site')
 			{
@@ -279,24 +276,28 @@
 				$url = ($position && isset($query)) ? substr($request, 0, $position) . "?$query" : $request;
 				$this->_cacheLite->remove($url);
 			}
-			else if ( ! $logged_in && $output = $this->_cacheLite->get($this->_url))
+			else if (!$logged_in && $output = $this->_cacheLite->get($this->_url))
 			{
 				# Add comment
 				if ($this->_get_comment_pref() == 'yes') $output .= "<!-- Cache served: ". $this->_cacheLite->_fileName	." -->";
+								
+				# Construct headers as per line 76 of class.frontendpage.php
+				if(@in_array('XML', $context['page_data']['type']) || @in_array('xml', $context['page_data']['type'])) {
+					header('Content-Type: text/xml; charset=utf-8');
+				} else if(@in_array('JSON', $context['page_data']['type']) || @in_array('json', $context['page_data']['type'])) {
+					header('Content-Type: application/json; charset=utf-8');
+				} else {
+					header('Content-Type: text/html; charset=utf-8');
+				}
 				
 				# Add some cache specific headers
 				$modified = $this->_cacheLite->lastModified();
 				$maxage = $modified - time() + $this->_lifetime;
-
+				
 				header("Expires: " . gmdate("D, d M Y H:i:s", $modified + $this->_lifetime) . " GMT");
 				header("Cache-Control: max-age=" . $maxage . ", must-revalidate");
 				header("Last-Modified: " . gmdate('D, d M Y H:i:s', $modified) . ' GMT');
 				header(sprintf('Content-Length: %d', strlen($output)));
-			
-				# Ensure the original headers are served out
-				foreach ($headers as $header) {
-					header($header);
-				}
 				print $output;
 				exit();
 			}
