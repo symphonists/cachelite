@@ -66,6 +66,8 @@
 				) ENGINE=MyISAM DEFAULT CHARSET=utf8
 			");
 			
+			if(!file_exists(MANIFEST . '/cachelite-excluded-pages')) touch(MANIFEST . '/cachelite-excluded-pages');
+			
 			# Base configuration
 			$config = $this->_Parent->Configuration;
 			$config->set('lifetime', '86400', 'cachelite');
@@ -238,25 +240,25 @@
 			if (in_array('cachelite-entry', $context['selected']) || in_array('cachelite-section', $context['selected'])) $context['documentation'][] = new XMLElement('h3', 'CacheLite: Expiring the cache');
 			if (in_array('cachelite-entry', $context['selected']))
 			{
-				$context['documentation'][] = new XMLElement('h4', 'Expire cache for pages showing this entry');
-				$context['documentation'][] = new XMLElement('p', 'When editing existing entries (one or many, supports the <em>Allow Multiple</em> option) any pages showing this entry will be flushed. Add the following in your form to trigger this filter:');
+				$context['documentation'][] = new XMLElement('h4', __('Expire cache for pages showing this entry'));
+				$context['documentation'][] = new XMLElement('p', __('When editing existing entries (one or many, supports the <em>Allow Multiple</em> option) any pages showing this entry will be flushed. Add the following in your form to trigger this filter:'));
 				$code = '<input type="hidden" name="cachelite[flush-entry]" value="yes"/>';
 				$context['documentation'][] = contentBlueprintsEvents::processDocumentationCode($code);
 			}
 			if (in_array('cachelite-section', $context['selected']))
 			{
-				$context['documentation'][] = new XMLElement('h4', 'Expire cache for pages showing content from this section');
-				$context['documentation'][] = new XMLElement('p', 'This will flush the cache of pages using any entries from this event&#8217;s section. Since you may want to only run it when creating new entries, this will only run if you pass a specific field in your HTML:');
+				$context['documentation'][] = new XMLElement('h4', __('Expire cache for pages showing content from this section'));
+				$context['documentation'][] = new XMLElement('p', __('This will flush the cache of pages using any entries from this event&#8217;s section. Since you may want to only run it when creating new entries, this will only run if you pass a specific field in your HTML:'));
 				$code = '<input type="hidden" name="cachelite[flush-section]" value="yes"/>';
 				$context['documentation'][] = contentBlueprintsEvents::processDocumentationCode($code);
 			}
 			if (in_array('cachelite-url', $context['selected']))
 			{
-				$context['documentation'][] = new XMLElement('h4', 'Expire cache for the passed URL');
-				$context['documentation'][] = new XMLElement('p', 'This will expire the cache of the URL at the value you pass it. For example');
+				$context['documentation'][] = new XMLElement('h4', __('Expire cache for the passed URL'));
+				$context['documentation'][] = new XMLElement('p', __('This will expire the cache of the URL at the value you pass it. For example'));
 				$code = '<input type="hidden" name="cachelite[flush-url]" value="/article/123/"/>';
 				$context['documentation'][] = contentBlueprintsEvents::processDocumentationCode($code);
-				$context['documentation'][] = new XMLElement('p', 'Will flush the cache for <code>http://domain.tld/article/123/</code>. If no value is passed it will flush the cache of the current page (i.e., the value of <code>action=""</code> in you form):');
+				$context['documentation'][] = new XMLElement('p', __('Will flush the cache for <code>http://domain.tld/article/123/</code>. If no value is passed it will flush the cache of the current page (i.e., the value of <code>action=""</code> in you form):'));
 				$code = '<input type="hidden" name="cachelite[flush-url]"/>';
 				$context['documentation'][] = contentBlueprintsEvents::processDocumentationCode($code);
 			}
@@ -279,10 +281,7 @@
 			}
 			else if ($logged_in && array_key_exists('flush', $_GET))
 			{
-				$query = trim(preg_replace('/&?flush(\=[^&]+)?/i', NULL, $_SERVER['QUERY_STRING']), "&");
-				$request = $_SERVER['REQUEST_URI'];
-				$position = strpos($request, "?");
-				$url = ($position && isset($query)) ? substr($request, 0, $position) . "?$query" : $request;
+				$url = rtrim(trim(preg_replace('/&?flush(\=[^&]+)?/i', NULL, $_SERVER['REQUEST_URI']), "&"), "?");
 				$this->_cacheLite->remove($url);
 			}
 			else if (!$logged_in && $output = $this->_cacheLite->get($this->_url))
