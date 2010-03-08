@@ -1,8 +1,8 @@
 # CacheLite #
 
-Version: 1.0.5  
+Version: 1.0.6  
 Author: [Max Wheeler](http://makenosound.com), [Nick Dunn](http://nick-dunn.co.uk)  
-Build Date: 17 December 2009  
+Build Date: 09 March 2010  
 Requirements: Symphony 2.0.6+
 
 
@@ -76,6 +76,12 @@ Would have the same result as the previous example.
 Due to changes in the Symphony core, version 1.0.0+ of the CacheLite extension only works with Symphony 2.0.6+. Versions prior to 1.0.0 are compatible with Symphony 2.0.1-2.0.3. If you're using 2.0.4-5 then you should upgrade :p
 
 ## Changelog ##
+
+### 1.0.6 ###
+
+* Added functions for translation
+* Fixed matching on page `?flush`
+* Defaults for configuration
 
 ### 1.0.5 ###
 
