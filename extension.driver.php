@@ -44,18 +44,19 @@
 		public function uninstall()
 		{
 			# Remove preferences
-			$this->_Parent->Configuration->remove('cachelite');
+			$config = $this->_Parent->Configuration;
+			$config->remove('cachelite');
 			$this->_Parent->saveConfig();
 			
 			# Remove file
 			if(file_exists(MANIFEST . '/cachelite-excluded-pages')) unlink(MANIFEST . '/cachelite-excluded-pages');
 			
-			// remove extension table
+			# Remove extension table
 			Administration::instance()->Database->query("DROP TABLE `tbl_cachelite_references`");
 		}
 		
 		public function install() {
-			// create extension table
+			# Create extension table
 			Administration::instance()->Database->query("
 				CREATE TABLE `tbl_cachelite_references` (
 				  `page` varchar(255) NOT NULL default '',
@@ -64,6 +65,13 @@
 				  PRIMARY KEY  (`page`)
 				) ENGINE=MyISAM DEFAULT CHARSET=utf8
 			");
+			
+			# Base configuration
+			$config = $this->_Parent->Configuration;
+			$config->set('lifetime', '86400', 'cachelite');
+			$config->set('show-comments', 'no', 'cachelite');
+			$config->set('backend-delegates', 'no', 'cachelite');
+			$this->_Parent->saveConfig();
 			return true;
 		}
 
@@ -157,32 +165,34 @@
 			$label = Widget::Label('Cache Period');
 			$label->appendChild(Widget::Input('settings[cachelite][lifetime]', General::Sanitize($this->_get_lifetime())));
 			$group->appendChild($label);
-			$group->appendChild(new XMLElement('p', 'Length of cache period in seconds.', array('class' => 'help')));
+			$group->appendChild(new XMLElement('p', __('Length of cache period in seconds.'), array('class' => 'help')));
 			
 			$label = Widget::Label('Excluded URLs');
 			$label->appendChild(Widget::Textarea('cachelite[excluded-pages]', 10, 50, $this->_get_excluded_pages()));
 			$group->appendChild($label);
-			$group->appendChild(new XMLElement('p', 'Add a line for each URL you want to be excluded from the cache. Add a <code>*</code> to the end of the URL for wildcard matches.', array('class' => 'help')));
+			$group->appendChild(new XMLElement('p', __('Add a line for each URL you want to be excluded from the cache. Add a <code>*</code> to the end of the URL for wildcard matches.'), array('class' => 'help')));
 			
 			$label = Widget::Label();
+			$label->setAttribute('for', 'cachelite-show-comments');
+			$hidden = Widget::Input('settings[cachelite][show-comments]', 'no', 'hidden');
 			$input = Widget::Input('settings[cachelite][show-comments]', 'yes', 'checkbox');
+			$input->setAttribute('id', 'cachelite-show-comments');
 			if($this->_Parent->Configuration->get('show-comments', 'cachelite') == 'yes') $input->setAttribute('checked', 'checked');
-			$label->setValue($input->generate() . ' Show comments in page source?');
+			$label->setValue($hidden->generate() . $input->generate() . __(' Show comments in page source?'));
 			$group->appendChild($label);
 			
 			$label = Widget::Label();
+			$label->setAttribute('for', 'cachelite-backend-delegates');
+			$hidden = Widget::Input('settings[cachelite][backend-delegates]', 'no', 'hidden');
 			$input = Widget::Input('settings[cachelite][backend-delegates]', 'yes', 'checkbox');
+			$input->setAttribute('id', 'cachelite-backend-delegates');
 			if($this->_Parent->Configuration->get('backend-delegates', 'cachelite') == 'yes') $input->setAttribute('checked', 'checked');
-			$label->setValue($input->generate() . ' Expire cache when entries are created/updated through the backend?');
+			$label->setValue($hidden->generate() . $input->generate() . __(' Expire cache when entries are created/updated through the backend?'));
 			$group->appendChild($label);
 			$context['wrapper']->appendChild($group);
 		}
 		
 		public function save_preferences($context) {
-			// set checkbox defaults to 'no'
-			if(!isset($context['settings']['cachelite']['show-comments'])) $context['settings']['cachelite']['show-comments'] = 'no';
-			if(!isset($context['settings']['cachelite']['backend-delegates'])) $context['settings']['cachelite']['backend-delegates'] = 'no';
-			
 			$this->_save_excluded_pages(stripslashes($_POST['cachelite']['excluded-pages']));
 		}
 		
