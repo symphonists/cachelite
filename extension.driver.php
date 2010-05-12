@@ -32,8 +32,8 @@
 		public function about()
 		{
 			return array('name' => 'CacheLite',
-						 'version' => '1.0.6',
-						 'release-date' => '2010-03-09',
+						 'version' => '1.0.7',
+						 'release-date' => '2010-05-12',
 						 'author' => array('name' => 'Max Wheeler',
 											 'website' => 'http://makenosound.com/',
 											 'email' => 'max@makenosound.com'),
@@ -44,8 +44,7 @@
 		public function uninstall()
 		{
 			# Remove preferences
-			$config = $this->_Parent->Configuration;
-			$config->remove('cachelite');
+			Symphony::Configuration()->remove('cachelite');
 			$this->_Parent->saveConfig();
 			
 			# Remove file
@@ -69,11 +68,10 @@
 			if(!file_exists(MANIFEST . '/cachelite-excluded-pages')) touch(MANIFEST . '/cachelite-excluded-pages');
 			
 			# Base configuration
-			$config = $this->_Parent->Configuration;
-			$config->set('lifetime', '86400', 'cachelite');
-			$config->set('show-comments', 'no', 'cachelite');
-			$config->set('backend-delegates', 'no', 'cachelite');
-			$this->_Parent->saveConfig();
+			Symphony::Configuration()->set('lifetime', '86400', 'cachelite');
+			Symphony::Configuration()->set('show-comments', 'no', 'cachelite');
+			Symphony::Configuration()->set('backend-delegates', 'no', 'cachelite');
+			Administration::instance()->saveConfig();
 			return true;
 		}
 
@@ -179,7 +177,7 @@
 			$hidden = Widget::Input('settings[cachelite][show-comments]', 'no', 'hidden');
 			$input = Widget::Input('settings[cachelite][show-comments]', 'yes', 'checkbox');
 			$input->setAttribute('id', 'cachelite-show-comments');
-			if($this->_Parent->Configuration->get('show-comments', 'cachelite') == 'yes') $input->setAttribute('checked', 'checked');
+			if(Symphony::Configuration()->get('show-comments', 'cachelite') == 'yes') $input->setAttribute('checked', 'checked');
 			$label->setValue($hidden->generate() . $input->generate() . __(' Show comments in page source?'));
 			$group->appendChild($label);
 			
@@ -188,7 +186,7 @@
 			$hidden = Widget::Input('settings[cachelite][backend-delegates]', 'no', 'hidden');
 			$input = Widget::Input('settings[cachelite][backend-delegates]', 'yes', 'checkbox');
 			$input->setAttribute('id', 'cachelite-backend-delegates');
-			if($this->_Parent->Configuration->get('backend-delegates', 'cachelite') == 'yes') $input->setAttribute('checked', 'checked');
+			if(Symphony::Configuration()->get('backend-delegates', 'cachelite') == 'yes') $input->setAttribute('checked', 'checked');
 			$label->setValue($hidden->generate() . $input->generate() . __(' Expire cache when entries are created/updated through the backend?'));
 			$group->appendChild($label);
 			$context['wrapper']->appendChild($group);
@@ -364,19 +362,19 @@
 		}
 		
 		public function entry_create($context) {
-			if ($this->_Parent->Configuration->get('backend-delegates', 'cachelite') == 'no') return;
+			if (Symphony::Configuration()->get('backend-delegates', 'cachelite') == 'no') return;
 			// flush by Section ID
 			$this->clear_pages_by_reference($context['section']->get('id'), 'section');
 		}
 		
 		public function entry_edit($context) {
-			if ($this->_Parent->Configuration->get('backend-delegates', 'cachelite') == 'no') return;
+			if (Symphony::Configuration()->get('backend-delegates', 'cachelite') == 'no') return;
 			// flush by Entry ID
 			$this->clear_pages_by_reference($context['entry']->get('id'), 'entry');
 		}
 		
 		public function entry_delete($context) {
-			if ($this->_Parent->Configuration->get('backend-delegates', 'cachelite') == 'no') return;
+			if (Symphony::Configuration()->get('backend-delegates', 'cachelite') == 'no') return;
 			// flush by Entry ID
 			$this->clear_pages_by_reference($context['entry_id'], 'entry');
 		}
@@ -399,12 +397,12 @@
 
 		private function _get_lifetime() {
 			$default_lifetime = 86400;
-			$val = $this->_Parent->Configuration->get('lifetime', 'cachelite');
+			$val = Symphony::Configuration()->get('lifetime', 'cachelite');
 			return (isset($val)) ? $val : $default_lifetime;
 		}
 		
 		private function _get_comment_pref() {
-			return $this->_Parent->Configuration->get('show-comments', 'cachelite');
+			return Symphony::Configuration()->get('show-comments', 'cachelite');
 		}
 		
 		private function _get_excluded_pages() {
