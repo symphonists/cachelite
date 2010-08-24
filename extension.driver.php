@@ -162,12 +162,12 @@
 			$group->appendChild(new XMLElement('legend', 'CacheLite'));
 
 			# Add Site Reference field
-			$label = Widget::Label('Cache Period');
+			$label = Widget::Label(__('Cache Period'));
 			$label->appendChild(Widget::Input('settings[cachelite][lifetime]', General::Sanitize($this->_get_lifetime())));
 			$group->appendChild($label);
 			$group->appendChild(new XMLElement('p', __('Length of cache period in seconds.'), array('class' => 'help')));
 			
-			$label = Widget::Label('Excluded URLs');
+			$label = Widget::Label(__('Excluded URLs'));
 			$label->appendChild(Widget::Textarea('cachelite[excluded-pages]', 10, 50, $this->_get_excluded_pages()));
 			$group->appendChild($label);
 			$group->appendChild(new XMLElement('p', __('Add a line for each URL you want to be excluded from the cache. Add a <code>*</code> to the end of the URL for wildcard matches.'), array('class' => 'help')));
@@ -178,7 +178,7 @@
 			$input = Widget::Input('settings[cachelite][show-comments]', 'yes', 'checkbox');
 			$input->setAttribute('id', 'cachelite-show-comments');
 			if(Symphony::Configuration()->get('show-comments', 'cachelite') == 'yes') $input->setAttribute('checked', 'checked');
-			$label->setValue($hidden->generate() . $input->generate() . __(' Show comments in page source?'));
+			$label->setValue(__('%s Show comments in page source?', array($hidden->generate() . $input->generate())));
 			$group->appendChild($label);
 			
 			$label = Widget::Label();
@@ -187,7 +187,7 @@
 			$input = Widget::Input('settings[cachelite][backend-delegates]', 'yes', 'checkbox');
 			$input->setAttribute('id', 'cachelite-backend-delegates');
 			if(Symphony::Configuration()->get('backend-delegates', 'cachelite') == 'yes') $input->setAttribute('checked', 'checked');
-			$label->setValue($hidden->generate() . $input->generate() . __(' Expire cache when entries are created/updated through the backend?'));
+			$label->setValue( __('%s Expire cache when entries are created/updated through the backend?', array($hidden->generate() . $input->generate())));
 			$group->appendChild($label);
 			$context['wrapper']->appendChild($group);
 		}
@@ -202,9 +202,9 @@
 		
 		public function addFilterToEventEditor($context) {
 			// adds filters to Filters select box on Event editor page
-			$context['options'][] = array('cachelite-entry', @in_array('cachelite-entry', $context['selected']) ,'CacheLite: expire cache for pages showing this entry');
-			$context['options'][] = array('cachelite-section', @in_array('cachelite-section', $context['selected']) ,'CacheLite: expire cache for pages showing content from this section');
-			$context['options'][] = array('cachelite-url', @in_array('cachelite-url', $context['selected']) ,'CacheLite: expire cache for the passed URL');
+			$context['options'][] = array('cachelite-entry', @in_array('cachelite-entry', $context['selected']) , 'CacheLite: ' . __('Expire cache for pages showing this entry'));
+			$context['options'][] = array('cachelite-section', @in_array('cachelite-section', $context['selected']) , 'CacheLite: ' . __('Expire cache for pages showing content from this section'));
+			$context['options'][] = array('cachelite-url', @in_array('cachelite-url', $context['selected']) , 'CacheLite: ' . __('Expire cache for the passed URL'));
 		}
 		
 		public function processEventData($context) {
@@ -235,7 +235,7 @@
 		
 		public function add_filter_documentation_to_event($context)
 		{
-			if (in_array('cachelite-entry', $context['selected']) || in_array('cachelite-section', $context['selected'])) $context['documentation'][] = new XMLElement('h3', 'CacheLite: Expiring the cache');
+			if (in_array('cachelite-entry', $context['selected']) || in_array('cachelite-section', $context['selected'])) $context['documentation'][] = new XMLElement('h3', __('CacheLite: Expiring the cache'));
 			if (in_array('cachelite-entry', $context['selected']))
 			{
 				$context['documentation'][] = new XMLElement('h4', __('Expire cache for pages showing this entry'));
