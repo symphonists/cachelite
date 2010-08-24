@@ -1,8 +1,8 @@
 # CacheLite #
 
-Version: 1.0.7  
+Version: 1.0.8  
 Author: [Max Wheeler](http://makenosound.com), [Nick Dunn](http://nick-dunn.co.uk)  
-Build Date: 12 May 2010  
+Build Date: 2010-08-25  
 Requirements: Symphony 2.0.6+
 
 
@@ -77,9 +77,13 @@ Due to changes in the Symphony core, version 1.0.0+ of the CacheLite extension o
 
 ## Changelog ##
 
+### 1.0.8 ###
+
+* Localisation and italian translation from [eKoeS](http://github.com/eKoeS)
+
 ### 1.0.7 ###
 
-* Minor cleanup to use newer acccessors for Administration/Symphony instances
+* Minor cleanup to use newer accessors for Administration/Symphony instances
 
 ### 1.0.6 ###
 
