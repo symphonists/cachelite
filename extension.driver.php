@@ -32,8 +32,8 @@
 		public function about()
 		{
 			return array('name' => 'CacheLite',
-						 'version' => '1.0.8',
-						 'release-date' => '2010-08-25',
+						 'version' => '1.0.9',
+						 'release-date' => '2010-09-21',
 						 'author' => array('name' => 'Max Wheeler',
 											 'website' => 'http://makenosound.com/',
 											 'email' => 'max@makenosound.com'),
@@ -298,11 +298,22 @@
 				
 				# Add some cache specific headers
 				$modified = $this->_cacheLite->lastModified();
-				$maxage = $modified - time() + $this->_lifetime;
+				$modified_gmt = gmdate('r', $modified);
 				
+				$etag = md5($modified . $this->_url);
+				header(sprintf('ETag: "%s"', $etag));
+				
+				# Set proper cache headers
+				if(isset($_SERVER['HTTP_IF_MODIFIED_SINCE']) || isset($_SERVER['HTTP_IF_NONE_MATCH'])){
+					if($_SERVER['HTTP_IF_MODIFIED_SINCE'] == $modified_gmt || str_replace('"', NULL, stripslashes($_SERVER['HTTP_IF_NONE_MATCH'])) == $etag){
+						header('HTTP/1.1 304 Not Modified');
+						exit();
+					}
+				}
+				
+				header('Last-Modified: ' . $modified_gmt);
+				header('Cache-Control: public');
 				header("Expires: " . gmdate("D, d M Y H:i:s", $modified + $this->_lifetime) . " GMT");
-				header("Cache-Control: max-age=" . $maxage . ", must-revalidate");
-				header("Last-Modified: " . gmdate('D, d M Y H:i:s', $modified) . ' GMT');
 				header(sprintf('Content-Length: %d', strlen($output)));
 				print $output;
 				exit();
