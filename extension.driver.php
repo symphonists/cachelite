@@ -32,8 +32,8 @@
 		public function about()
 		{
 			return array('name' => 'CacheLite',
-						 'version' => '1.0.9',
-						 'release-date' => '2010-09-21',
+						 'version' => '1.0.10',
+						 'release-date' => '2010-09-23',
 						 'author' => array('name' => 'Max Wheeler',
 											 'website' => 'http://makenosound.com/',
 											 'email' => 'max@makenosound.com'),
@@ -286,14 +286,30 @@
 			{
 				# Add comment
 				if ($this->_get_comment_pref() == 'yes') $output .= "<!-- Cache served: ". $this->_cacheLite->_fileName	." -->";
-								
-				# Construct headers as per line 76 of class.frontendpage.php
-				if(@in_array('XML', $context['page_data']['type']) || @in_array('xml', $context['page_data']['type'])) {
-					header('Content-Type: text/xml; charset=utf-8');
-				} else if(@in_array('JSON', $context['page_data']['type']) || @in_array('json', $context['page_data']['type'])) {
-					header('Content-Type: application/json; charset=utf-8');
-				} else {
+				
+				if(!isset($context['page_data']['type']) || !is_array($context['page_data']['type']) || empty($context['page_data']['type'])) {
 					header('Content-Type: text/html; charset=utf-8');
+				} else if(@in_array('XML', $context['page_data']['type']) || @in_array('xml', $context['page_data']['type'])) {
+					header('Content-Type: text/xml; charset=utf-8');
+				} else { 
+					foreach($context['page_data']['type'] as $type) {
+						$content_type = $this->_Parent->Configuration->get(strtolower($type), 'content-type-mappings');
+					
+						if(!is_null($content_type)){	
+							header("Content-Type: $content_type;");
+						}
+					
+						if($type{0} == '.') {  
+							$FileName = $page_data['handle'];
+  						header("Content-Disposition: attachment; filename={$FileName}{$type}");
+						}
+					}
+				}
+				
+				if(@in_array('404', $context['page_data']['type'])) {
+					header('HTTP/1.0 404 Not Found');
+				} else if(@in_array('403', $context['page_data']['type'])) {
+					header('HTTP/1.0 403 Forbidden');
 				}
 				
 				# Add some cache specific headers
