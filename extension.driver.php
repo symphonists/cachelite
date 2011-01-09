@@ -44,12 +44,12 @@
 			if(file_exists(MANIFEST . '/cachelite-excluded-pages')) unlink(MANIFEST . '/cachelite-excluded-pages');
 			
 			# Remove extension table
-			Administration::instance()->Database->query("DROP TABLE `tbl_cachelite_references`");
+			Symphony::Database()->query("DROP TABLE `tbl_cachelite_references`");
 		}
 		
 		public function install() {
 			# Create extension table
-			Administration::instance()->Database->query("
+			Symphony::Database()->query("
 				CREATE TABLE `tbl_cachelite_references` (
 				  `page` varchar(255) NOT NULL default '',
 				  `sections` varchar(255) default NULL,
