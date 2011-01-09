@@ -16,7 +16,7 @@
 				'lifeTime' => $this->_lifetime
 			));
 			
-			$this->_url = $_SERVER['REQUEST_URI'];
+			$this->_url = urlencode($_SERVER['REQUEST_URI']);
 		}
 		
 		/*-------------------------------------------------------------------------
@@ -431,7 +431,7 @@
 		}
 		
 		private function _in_excluded_pages() {
-			$segments = explode('/', $this->_url);
+			$segments = explode('/', urldecode($this->_url));
 			$domain = explode('/', DOMAIN);
 			foreach($segments as $key => $segment) {
 				if(in_array($segment, $domain) || empty($segment)) unset($segments[$key]);
