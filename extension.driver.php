@@ -25,8 +25,8 @@
 		public function about()
 		{
 			return array('name' => 'CacheLite',
-						 'version' => '1.0.10',
-						 'release-date' => '2010-09-23',
+						 'version' => '1.0.11',
+						 'release-date' => '2011-01-09',
 						 'author' => array('name' => 'Max Wheeler',
 											 'website' => 'http://makenosound.com/',
 											 'email' => 'max@makenosound.com'),
