@@ -5,6 +5,7 @@
 		protected $_cacheLite = null;
 		protected $_lifetime = null;
 		protected $_url = null;
+		protected $_get = null;
 		private $_sections = array();
 		private $_entries = array();
 		
@@ -15,8 +16,9 @@
 				'cacheDir' => CACHE . '/',
 				'lifeTime' => $this->_lifetime
 			));
-			
-			$this->_url = urlencode($_SERVER['REQUEST_URI']);
+			$this->_get = $_GET;
+			ksort($this->_get);
+			$this->_url = serialize($this->_get);
 		}
 		
 		/*-------------------------------------------------------------------------
@@ -222,7 +224,9 @@
 			# flush the cache based on explicit value
 			if(in_array('cachelite-url', $context['event']->eParamFILTERS)) {
 				$flush = (empty($_POST['cachelite']['flush-url'])) ? $this->_url : General::sanitize($_POST['cachelite']['flush-url']);
-				$this->_cacheLite->remove($flush);
+				if($this->_cacheLite->get($flush)) {
+					$this->_cacheLite->remove($flush);
+				}
 			}
 		}
 		
@@ -264,14 +268,17 @@
 			if($this->_in_excluded_pages()) return;
 			$logged_in = isset(Frontend::instance()->Author);
 			
-			if ($logged_in && array_key_exists('flush', $_GET) && $_GET['flush'] == 'site')
+			if ($logged_in && array_key_exists('flush', $this->_get) && $this->_get['flush'] == 'site')
 			{
 				$this->_cacheLite->clean();
 			}
-			else if ($logged_in && array_key_exists('flush', $_GET))
+			else if ($logged_in && array_key_exists('flush', $this->_get))
 			{
-				$url = rtrim(trim(preg_replace('/&?flush(\=[^&]+)?/i', NULL, $_SERVER['REQUEST_URI']), "&"), "?");
-				$this->_cacheLite->remove($url);
+				unset($this->_get['flush']);
+				$url = serialize($this->_get);
+				if($this->_cacheLite->get($url)) {
+					$this->_cacheLite->remove($url);
+				}
 			}
 			else if (!$logged_in && $output = $this->_cacheLite->get($this->_url))
 			{
@@ -402,7 +409,9 @@
 			// flush the cache for each
 			foreach($pages as $page) {
 				$url = $page['page'];
-				$this->_cacheLite->remove($url);
+				if($this->_cacheLite->get($url)) {
+					$this->_cacheLite->remove($url);
+				}
 				$this->_delete_page_references($url);
 			}
 
