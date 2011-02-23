@@ -224,9 +224,7 @@
 			# flush the cache based on explicit value
 			if(in_array('cachelite-url', $context['event']->eParamFILTERS)) {
 				$flush = (empty($_POST['cachelite']['flush-url'])) ? $this->_url : General::sanitize($_POST['cachelite']['flush-url']);
-				if($this->_cacheLite->get($flush)) {
-					$this->_cacheLite->remove($flush);
-				}
+				$this->_cacheLite->remove($flush, 'default', true);
 			}
 		}
 		
@@ -276,9 +274,7 @@
 			{
 				unset($this->_get['flush']);
 				$url = serialize($this->_get);
-				if($this->_cacheLite->get($url)) {
-					$this->_cacheLite->remove($url);
-				}
+				$this->_cacheLite->remove($url, 'default', true);
 			}
 			else if (!$logged_in && $output = $this->_cacheLite->get($this->_url))
 			{
@@ -409,9 +405,7 @@
 			// flush the cache for each
 			foreach($pages as $page) {
 				$url = $page['page'];
-				if($this->_cacheLite->get($url)) {
-					$this->_cacheLite->remove($url);
-				}
+				$this->_cacheLite->remove($url, 'default', true);
 				$this->_delete_page_references($url);
 			}
 
