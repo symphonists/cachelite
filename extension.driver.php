@@ -27,8 +27,8 @@
 		public function about()
 		{
 			return array('name' => 'CacheLite',
-						 'version' => '1.1.0',
-						 'release-date' => '2011-02-23',
+						 'version' => '1.1.1',
+						 'release-date' => '2011-02-24',
 						 'author' => array('name' => 'Max Wheeler',
 											 'website' => 'http://makenosound.com/',
 											 'email' => 'max@makenosound.com'),
@@ -434,7 +434,7 @@
 		}
 		
 		private function _in_excluded_pages() {
-			$segments = explode('/', urldecode($this->_url));
+			$segments = explode('/', $this->_get['symphony-page']);
 			$domain = explode('/', DOMAIN);
 			foreach($segments as $key => $segment) {
 				if(in_array($segment, $domain) || empty($segment)) unset($segments[$key]);
