@@ -27,8 +27,8 @@
 		public function about()
 		{
 			return array('name' => 'CacheLite',
-						 'version' => '1.1.1',
-						 'release-date' => '2011-02-24',
+						 'version' => '1.1.2',
+						 'release-date' => '2011-04-05',
 						 'author' => array('name' => 'Max Wheeler',
 											 'website' => 'http://makenosound.com/',
 											 'email' => 'max@makenosound.com'),
@@ -384,13 +384,17 @@
 		public function entry_create($context) {
 			if (Symphony::Configuration()->get('backend-delegates', 'cachelite') == 'no') return;
 			// flush by Section ID
-			$this->clear_pages_by_reference($context['section']->get('id'), 'section');
+			if (isset($context['section'])) {
+				$this->clear_pages_by_reference($context['section']->get('id'), 'section');
+			}
 		}
 		
 		public function entry_edit($context) {
 			if (Symphony::Configuration()->get('backend-delegates', 'cachelite') == 'no') return;
 			// flush by Entry ID
-			$this->clear_pages_by_reference($context['entry']->get('id'), 'entry');
+			if (isset($context['entry'])) {
+				$this->clear_pages_by_reference($context['entry']->get('id'), 'entry');
+			}
 		}
 		
 		public function entry_delete($context) {
