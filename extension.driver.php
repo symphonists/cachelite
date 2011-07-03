@@ -263,7 +263,7 @@
 		-------------------------------------------------------------------------*/
 		
 		public function intercept_page($context) {
-			if($this->_in_excluded_pages()) return;
+			if($this->_in_excluded_pages() OR ! empty($_POST)) return;
 			$logged_in = isset(Frontend::instance()->Author);
 			
 			if ($logged_in && array_key_exists('flush', $this->_get) && $this->_get['flush'] == 'site')
