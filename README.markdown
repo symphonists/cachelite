@@ -1,12 +1,6 @@
-# CacheLite #
+# CacheLite
 
-Version: 1.1.3  
-Author: [Max Wheeler](http://makenosound.com), [Nick Dunn](http://nick-dunn.co.uk)  
-Build Date: 2011-04-05  
-Requirements: Symphony 2.0.6+
-
-
-## Installation ##
+## Installation 
 
 1. Upload the 'cachelite' folder in this archive to your Symphony 'extensions' folder.
 2. Enable it by selecting the "CacheLite", choose Enable from the with-selected menu, then click Apply.
@@ -14,9 +8,9 @@ Requirements: Symphony 2.0.6+
 4. The output of your site will now be cached.
 
 
-## Usage ##
+## Usage
 
-### Excluding pages ###
+### Excluding pages
 
 By default all pages are cached. You can exclude URLs from the cache by adding them to the list of excluded pages in System > Preferences. Each URL must sit on a separate line and wildcards (`*`) may be used at the end of URLs to match *everything* below that URL.
 
@@ -29,7 +23,7 @@ Excluded pages are assumed to originate from the root. All the following example
 
 Note that caching is *not* done for logged in users. This lets you add administrative tools to the frontend of your site without them being cached for normal users.
 
-### Flushing the cache ###
+### Flushing the cache
 
 Caching is done on a per-URL basis. To manually flush the cache for an individual page simply append `?flush` to the end of its URL. To flush the cache for the entire site you just need to append `?flush=site` to any URL in the site. You *must* be logged in to flush the cache.
 
@@ -37,7 +31,7 @@ You can also remove cache files using your FTP client: navigate to `/manifest/ca
 
 The cache of each page will automatically flush itself after the timeout period is reached. The timeout period can be modified on the System > Preferences page.
 
-### Flushing the cache when content changes ###
+### Flushing the cache when content changes
 
 You can selectively flush the cache when new entries are created or an entry is updated. Updates through both the backend and frontend Events are supported. To flush the cache when entries are modified in the Symphony backend navigate to System > Preferences and tick the "Expire cache when entries are created/updated through the backend?" checkbox. When an entry is modified, one of two outcomes are achieved:
 
@@ -63,7 +57,7 @@ c) **CacheLite: expire cache for the passed URL**
   
 This allows you to selectively flush the cache during Event execution, which is useful if you want to expire the cache as new entries are added but don't want to flush the whole *section*. This filter will only run if you pass a specific field in your HTML:
   
-  <input type="hidden" name="cachelite[flush-url]" value="/article/123/"/>
+    <input type="hidden" name="cachelite[flush-url]" value="/article/123/"/>
 
 If you pass this field with no value, it will default to the *current* URL. That is, from a page at <http://domain.tld/article/123/>, submitting the following:
 
@@ -71,76 +65,76 @@ If you pass this field with no value, it will default to the *current* URL. That
 
 Would have the same result as the previous example.
 
-## Compatibility ##
+## Compatibility
 
 Due to changes in the Symphony core, version 1.0.0+ of the CacheLite extension only works with Symphony 2.0.6+. Versions prior to 1.0.0 are compatible with Symphony 2.0.1-2.0.3. If you're using 2.0.4-5 then you should upgrade :p
 
-## Changelog ##
+## Changelog
 
-### 1.1.3 ###
+### 1.1.3
 
 * Don't cache is there is `$_POST` data
 
-### 1.1.2 ###
+### 1.1.2
 
 * Romanian translation from [vlad-ghita](https://github.com/vlad-ghita)
 * Check context is set before clearing references
 
-### 1.1.1 ###
+### 1.1.1
 
 * Fix bug in excluded pages introduced by change in 1.1.0
 
-### 1.1.0 ###
+### 1.1.0
 
 * Fix bug in `?flush`
 * Made sure $_GET parameters are parsed consistently (i.e., regardless of order)
 
-### 1.0.12 ###
+### 1.0.12
 
 * Encode URLs
 
-### 1.0.11 ###
+### 1.0.11
 
 * Removed references to `Frontend`
 * Cleaned up accessors
 
-### 1.0.10 ###
+### 1.0.10
 
 * Added support additional content types via the Content Type Mappings extension
 
-### 1.0.9 ###
+### 1.0.9
 
 * Added 304 header support
 
-### 1.0.8 ###
+### 1.0.8
 
 * Localisation and italian translation from [eKoeS](http://github.com/eKoeS)
 
-### 1.0.7 ###
+### 1.0.7
 
 * Minor cleanup to use newer accessors for Administration/Symphony instances
 
-### 1.0.6 ###
+### 1.0.6
 
 * Added functions for translation
 * Fixed matching on page `?flush`
 * Defaults for configuration
 
-### 1.0.5 ###
+### 1.0.5
 
 * Changed `intercept_page` delegate to `FrontendPageResolved`. Should now execute immediately after the Page is found, but before anything else happens.
 * Because of the change above, headers are determined manually (as with normal pages). Supported types are HTML, XML and JSON.
 
-### 1.0.4 ###
+### 1.0.4
 
 * Added support for flushing the cache on a per-URL basis during `Event` execution
 
-### 1.0.3 ###
+### 1.0.3
 
 * Subscribe to the Delete delegate to flush pages when an entry is removed (delegate not included in Symphony 2.0.6) (Nick Dunn)
 * Fixed bug introduced in 1.0.2 where caching was occurring for logged in users
 * Fixed bug introduced in 1.0.2 where `?flush` was being included in the cache ID
 
-### 1.0.2 ###
+### 1.0.2
 
 * Added support for flushing the cache based on entry/section IDs (Nick Dunn)
