@@ -65,11 +65,12 @@ If you pass this field with no value, it will default to the *current* URL. That
 
 Would have the same result as the previous example.
 
-## Compatibility
-
-Due to changes in the Symphony core, version 1.0.0+ of the CacheLite extension only works with Symphony 2.0.6+. Versions prior to 1.0.0 are compatible with Symphony 2.0.1-2.0.3. If you're using 2.0.4-5 then you should upgrade :p
-
 ## Changelog
+
+### 1.2
+
+* Compatible with Symphony 2.3
+* Updated cachelite library to most recent version 1.7.12
 
 ### 1.1.3
 
