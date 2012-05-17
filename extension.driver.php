@@ -24,17 +24,6 @@
 		/*-------------------------------------------------------------------------
 		Extension definition
 		-------------------------------------------------------------------------*/
-		public function about()
-		{
-			return array('name' => 'CacheLite',
-						 'version' => '1.1.3',
-						 'release-date' => '2011-04-05',
-						 'author' => array('name' => 'Max Wheeler',
-											 'website' => 'http://makenosound.com/',
-											 'email' => 'max@makenosound.com'),
- 						 'description' => 'Allows for simple frontend caching using the CacheLite library.'
-				 		);
-		}
 		
 		public function uninstall()
 		{
@@ -109,7 +98,7 @@
 				),
 				array(
 					'page'		=> '/publish/',
-					'delegate'	=> 'Delete',
+					'delegate'	=> 'EntryPreDelete',
 					'callback'	=> 'entry_delete'
 				),
 				array(
