@@ -483,6 +483,17 @@ class Cache_Lite
     }
 
     /**
+    * Get the life time
+    *
+    * @return int the life time
+    * @access public
+    */
+    function getLifeTime()
+    {
+        return $this->_lifeTime;
+    }
+
+    /**
     * Save the state of the caching memory array into a cache file cache
     *
     * @param string $id cache id
