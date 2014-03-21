@@ -460,7 +460,7 @@
 		-------------------------------------------------------------------------*/
 		
 		private function _hash($url) {
-			return hash('sha512', url);
+			return hash('sha512', $url);
 		}
 		
 		private function _get_pages_by_content($id, $type) {
