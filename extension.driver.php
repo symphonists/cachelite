@@ -459,6 +459,10 @@
 			Database Helpers
 		-------------------------------------------------------------------------*/
 		
+		private function _hash($url) {
+			return hash('sha512', $url);
+		}
+		
 		private function _get_pages_by_content($id, $type) {
 			return Symphony::Database()->fetch(
 				sprintf(
@@ -473,7 +477,7 @@
 			Symphony::Database()->query(
 				sprintf(
 					"DELETE FROM tbl_cachelite_references WHERE page='%s'",
-					$url
+					$this->_hash($url)
 				)
 			);
 		}
@@ -482,7 +486,7 @@
 			Symphony::Database()->query(
 				sprintf(
 					"INSERT INTO tbl_cachelite_references (page, sections, entries) VALUES ('%s','%s','%s')",
-					$url,
+					$this->_hash($url),
 					'|' . implode('|', $sections) . '|',
 					'|' . implode('|', $entries) . '|'
 				)
