@@ -16,9 +16,7 @@
 				'cacheDir' => CACHE . '/',
 				'lifeTime' => $this->_lifetime
 			));
-			$this->_get = $_GET;
-			ksort($this->_get);
-			$this->_url = $this->_hash($this->_get);
+			$this->_updateFromGetValues();
 		}
 		
 		/*-------------------------------------------------------------------------
@@ -255,6 +253,8 @@
 			if($this->_in_excluded_pages() OR ! empty($_POST)) return;
 			$logged_in = isset(Frontend::instance()->Author);
 			
+			$this->_updateFromGetValues();
+			
 			if ($logged_in && array_key_exists('flush', $this->_get) && $this->_get['flush'] == 'site')
 			{
 				$this->_cacheLite->clean();
@@ -325,6 +325,8 @@
 			
 			if( ! $logged_in)
 			{
+				$this->_updateFromGetValues();
+				
 				$render = $output['output'];
 				
 				// rebuild entry/section reference list for this page
@@ -459,10 +461,6 @@
 			Database Helpers
 		-------------------------------------------------------------------------*/
 		
-		private function _hash($url) {
-			return hash('sha512', $url);
-		}
-		
 		private function _get_pages_by_content($id, $type) {
 			return Symphony::Database()->fetch(
 				sprintf(
@@ -491,5 +489,21 @@
 					'|' . implode('|', $entries) . '|'
 				)
 			);
+		}
+		
+		/*-------------------------------------------------------------------------
+			Utilities
+		-------------------------------------------------------------------------*/
+		
+		private function _hash($url) {
+			return hash('sha512', $url);
+		}
+		
+		private function _updateFromGetValues() {
+			// Cache sorted $_GET;
+			$this->_get = $_GET;
+			ksort($this->_get);
+			// hash it to make sure it wont overflow 255 chars
+			$this->_url = $this->_hash($this->_get);
 		}
 	}
