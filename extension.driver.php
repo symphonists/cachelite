@@ -496,7 +496,7 @@
 		-------------------------------------------------------------------------*/
 		
 		private function _hash($url) {
-			return hash('sha512', $url);
+			return hash('sha512', serialize($url));
 		}
 		
 		private function _updateFromGetValues() {
