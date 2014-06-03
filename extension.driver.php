@@ -18,7 +18,7 @@
 			));
 			$this->_get = $_GET;
 			ksort($this->_get);
-			$this->_url = serialize($this->_get);
+			$this->_url = $this->_hash($this->_get);
 		}
 		
 		/*-------------------------------------------------------------------------
@@ -212,7 +212,7 @@
 		public function processPostSaveData($context) {
 			# flush the cache based on explicit value
 			if(in_array('cachelite-url', $context['event']->eParamFILTERS)) {
-				$flush = (empty($_POST['cachelite']['flush-url'])) ? $this->_url : General::sanitize($_POST['cachelite']['flush-url']);
+				$flush = (empty($_POST['cachelite']['flush-url'])) ? $this->_url : $this->_hash(General::sanitize($_POST['cachelite']['flush-url']));
 				$this->_cacheLite->remove($flush, 'default', true);
 			}
 		}
@@ -477,7 +477,7 @@
 			Symphony::Database()->query(
 				sprintf(
 					"DELETE FROM tbl_cachelite_references WHERE page='%s'",
-					$this->_hash($url)
+					$url
 				)
 			);
 		}
@@ -486,7 +486,7 @@
 			Symphony::Database()->query(
 				sprintf(
 					"INSERT INTO tbl_cachelite_references (page, sections, entries) VALUES ('%s','%s','%s')",
-					$this->_hash($url),
+					$url,
 					'|' . implode('|', $sections) . '|',
 					'|' . implode('|', $entries) . '|'
 				)
