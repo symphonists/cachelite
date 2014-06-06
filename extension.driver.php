@@ -29,7 +29,7 @@
 		{
 			# Remove preferences
 			Symphony::Configuration()->remove('cachelite');
-			Administration::instance()->saveConfig();
+			Symphony::Configuration()->write();
 			
 			# Remove file
 			if(file_exists(MANIFEST . '/cachelite-excluded-pages')) unlink(MANIFEST . '/cachelite-excluded-pages');
@@ -55,7 +55,7 @@
 			Symphony::Configuration()->set('lifetime', '86400', 'cachelite');
 			Symphony::Configuration()->set('show-comments', 'no', 'cachelite');
 			Symphony::Configuration()->set('backend-delegates', 'no', 'cachelite');
-			Administration::instance()->saveConfig();
+			Symphony::Configuration()->write();
 			return true;
 		}
 
