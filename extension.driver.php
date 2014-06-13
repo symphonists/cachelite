@@ -16,9 +16,7 @@
 				'cacheDir' => CACHE . '/',
 				'lifeTime' => $this->_lifetime
 			));
-			$this->_get = $_GET;
-			ksort($this->_get);
-			$this->_url = serialize($this->_get);
+			$this->_updateFromGetValues();
 		}
 		
 		/*-------------------------------------------------------------------------
@@ -212,7 +210,7 @@
 		public function processPostSaveData($context) {
 			# flush the cache based on explicit value
 			if(in_array('cachelite-url', $context['event']->eParamFILTERS)) {
-				$flush = (empty($_POST['cachelite']['flush-url'])) ? $this->_url : General::sanitize($_POST['cachelite']['flush-url']);
+				$flush = (empty($_POST['cachelite']['flush-url'])) ? $this->_url : $this->_hash(General::sanitize($_POST['cachelite']['flush-url']));
 				$this->_cacheLite->remove($flush, 'default', true);
 			}
 		}
@@ -254,6 +252,8 @@
 		public function intercept_page($context) {
 			if($this->_in_excluded_pages() OR ! empty($_POST)) return;
 			$logged_in = isset(Frontend::instance()->Author);
+			
+			$this->_updateFromGetValues();
 			
 			if ($logged_in && array_key_exists('flush', $this->_get) && $this->_get['flush'] == 'site')
 			{
@@ -325,6 +325,8 @@
 			
 			if( ! $logged_in)
 			{
+				$this->_updateFromGetValues();
+				
 				$render = $output['output'];
 				
 				// rebuild entry/section reference list for this page
@@ -459,10 +461,6 @@
 			Database Helpers
 		-------------------------------------------------------------------------*/
 		
-		private function _hash($url) {
-			return hash('sha512', $url);
-		}
-		
 		private function _get_pages_by_content($id, $type) {
 			return Symphony::Database()->fetch(
 				sprintf(
@@ -477,7 +475,7 @@
 			Symphony::Database()->query(
 				sprintf(
 					"DELETE FROM tbl_cachelite_references WHERE page='%s'",
-					$this->_hash($url)
+					$url
 				)
 			);
 		}
@@ -486,10 +484,26 @@
 			Symphony::Database()->query(
 				sprintf(
 					"INSERT INTO tbl_cachelite_references (page, sections, entries) VALUES ('%s','%s','%s')",
-					$this->_hash($url),
+					$url,
 					'|' . implode('|', $sections) . '|',
 					'|' . implode('|', $entries) . '|'
 				)
 			);
+		}
+		
+		/*-------------------------------------------------------------------------
+			Utilities
+		-------------------------------------------------------------------------*/
+		
+		private function _hash($url) {
+			return hash('sha512', serialize($url));
+		}
+		
+		private function _updateFromGetValues() {
+			// Cache sorted $_GET;
+			$this->_get = $_GET;
+			ksort($this->_get);
+			// hash it to make sure it wont overflow 255 chars
+			$this->_url = $this->_hash($this->_get);
 		}
 	}
