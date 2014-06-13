@@ -29,7 +29,7 @@
 		{
 			# Remove preferences
 			Symphony::Configuration()->remove('cachelite');
-			Administration::instance()->saveConfig();
+			Symphony::Configuration()->write();
 			
 			# Remove file
 			if(file_exists(MANIFEST . '/cachelite-excluded-pages')) unlink(MANIFEST . '/cachelite-excluded-pages');
@@ -55,7 +55,7 @@
 			Symphony::Configuration()->set('lifetime', '86400', 'cachelite');
 			Symphony::Configuration()->set('show-comments', 'no', 'cachelite');
 			Symphony::Configuration()->set('backend-delegates', 'no', 'cachelite');
-			Administration::instance()->saveConfig();
+			Symphony::Configuration()->write();
 			return true;
 		}
 
@@ -350,7 +350,7 @@
 		
 		# Parse any Event or Section elements from the page XML
 		public function parse_page_data($context) {
-			$xml = DomDocument::loadXML($context['xml']);
+			$xml = DomDocument::loadXML($context['xml']->generate());
 			$xpath = new DOMXPath($xml);
 			
 			$sections_xpath = $xpath->query('//section[@id and @handle]');
