@@ -263,7 +263,7 @@
 			else if ($logged_in && array_key_exists('flush', $this->_get))
 			{
 				unset($this->_get['flush']);
-				$url = serialize($this->_get);
+				$url = $this->_hash($this->_get);
 				$this->_cacheLite->remove($url, 'default', true);
 			}
 			else if (!$logged_in && $output = $this->_cacheLite->get($this->_url))
