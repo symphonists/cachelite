@@ -40,7 +40,7 @@
 				  `sections` varchar(255) default NULL,
 				  `entries` varchar(255) default NULL,
 				  PRIMARY KEY  (`page`)
-				) ENGINE=MyISAM DEFAULT CHARSET=utf8
+				) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci
 			");
 
 			if(!file_exists(MANIFEST . '/cachelite-excluded-pages')) touch(MANIFEST . '/cachelite-excluded-pages');
