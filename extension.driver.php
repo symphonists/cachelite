@@ -314,6 +314,8 @@
 				header('Last-Modified: ' . $modified_gmt);
 				header('Cache-Control: public');
 				header("Expires: " . gmdate("D, d M Y H:i:s", $modified + $this->_lifetime) . " GMT");
+				header("X-Frame-Options: SAMEORIGIN");
+				header("Access-Control-Allow-Origin: " . URL);
 				header(sprintf('Content-Length: %d', strlen($output)));
 				print $output;
 				exit();
@@ -344,6 +346,8 @@
 				header("Expires: " . gmdate("D, d M Y H:i:s", $this->_lifetime) . " GMT");
 				header("Cache-Control: max-age=" . $this->_lifetime . ", must-revalidate");
 				header("Last-Modified: " . gmdate('D, d M Y H:i:s', time()) . ' GMT');
+				header("X-Frame-Options: SAMEORIGIN");
+				header("Access-Control-Allow-Origin: " . URL);
 				header(sprintf('Content-Length: %d', strlen($render)));
 
 				print $render;
