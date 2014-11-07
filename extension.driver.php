@@ -251,7 +251,7 @@
 		-------------------------------------------------------------------------*/
 
 		public function intercept_page($context) {
-			if($this->_in_excluded_pages() || !empty($_POST)) return;
+			if($this->_in_excluded_pages() || !$this->_isGetRequest()) return;
 			$logged_in = Symphony::isLoggedIn();
 
 			$this->_updateFromGetValues();
@@ -321,7 +321,7 @@
 		}
 
 		public function write_page_cache(&$output) {
-			if($this->_in_excluded_pages()) return;
+			if($this->_in_excluded_pages() || !$this->_isGetRequest()) return;
 			$logged_in = Symphony::isLoggedIn();
 
 			if( ! $logged_in)
@@ -506,5 +506,9 @@
 			ksort($this->_get);
 			// hash it to make sure it wont overflow 255 chars
 			$this->_url = $this->_hash($this->_get);
+		}
+
+		private function _isGetRequest() {
+			return $_SERVER['REQUEST_METHOD'] == 'GET' || $_SERVER['REQUEST_METHOD'] == 'HEAD';
 		}
 	}
