@@ -251,8 +251,8 @@
 		-------------------------------------------------------------------------*/
 
 		public function intercept_page($context) {
-			if($this->_in_excluded_pages() OR ! empty($_POST)) return;
-			$logged_in = isset(Frontend::instance()->Author);
+			if($this->_in_excluded_pages() || !empty($_POST)) return;
+			$logged_in = Symphony::isLoggedIn();
 
 			$this->_updateFromGetValues();
 
@@ -322,7 +322,7 @@
 
 		public function write_page_cache(&$output) {
 			if($this->_in_excluded_pages()) return;
-			$logged_in = isset(Frontend::instance()->Author);
+			$logged_in = Symphony::isLoggedIn();
 
 			if( ! $logged_in)
 			{
