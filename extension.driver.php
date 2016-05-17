@@ -357,7 +357,10 @@
 
 		# Parse any Event or Section elements from the page XML
 		public function parse_page_data($context) {
-			$xml = DomDocument::loadXML($context['xml']->generate());
+			$xml = @DomDocument::loadXML($context['xml']->generate());
+			if (!$xml) {
+				return;
+			}
 			$xpath = new DOMXPath($xml);
 
 			$sections_xpath = $xpath->query('//section[@id and @handle]');
