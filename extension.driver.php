@@ -451,17 +451,24 @@
 					$r = str_replace('http://', NULL, $r);
 					$r = str_replace(DOMAIN . '/', NULL, $r);
 					$r = "/" . trim($r, "/"); # Make sure we're matching `/url/blah` not `url/blah
+				/*	if($r != '*'){
+						$e = explode("/*",$r);
+						$r = str_replace($e, NULL, $r);
+					}*/
 					if($r == '*') {
 						return true;
 					}
 					elseif(substr($r, -1) == '*') {
+						echo "turkish";
 						// page/* is the same as page*
 						$offset = substr($r, -2) == '/' ? 2 : 1;
-						if (strncasecmp($path, $r, strlen($r) - $offset) == 0) {
+						if (strncasecmp($path, $r, strlen($r) - $offset) == 0) {;
+							echo "nanan";
 							return true;
-						}
+						} 
 					}
 					elseif(strcasecmp($r, $path) == 0) {
+						echo "you";
 						return true;
 					}
 				}

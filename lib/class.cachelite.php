@@ -291,7 +291,7 @@ class Cache_Lite
             $this->setOption($key, $value);
         }
         if (!isset($options['cacheDir']) && function_exists('sys_get_temp_dir')) {
-        	$this->setOption('cacheDir', sys_get_temp_dir() . DIRECTORY_SEPARATOR);
+            $this->setOption('cacheDir', sys_get_temp_dir() . DIRECTORY_SEPARATOR);
         }
     }
     
@@ -386,14 +386,15 @@ class Cache_Lite
                     return true;
                 }
             }
-            if ($this->_automaticCleaningFactor>0 && ($this->_automaticCleaningFactor==1 || mt_rand(1, $this->_automaticCleaningFactor)==1)) {
-				$this->clean(false, 'old');			
-			}
+            if ($this->_automaticCleaningFactor > 0 && ($this->_automaticCleaningFactor == 1 || mt_rand(1, $this->_automaticCleaningFactor) == 1)) {
+                die;
+                $this->clean(false, 'old');
+            }
             if ($this->_writeControl) {
                 $res = $this->_writeAndControl($data);
                 if (is_bool($res)) {
                     if ($res) {
-                        return true;  
+                        return true;
                     }
                     // if $res if false, we need to invalidate the cache
                     @touch($this->_file, time() - 2*abs($this->_lifeTime));
@@ -613,7 +614,7 @@ class Cache_Lite
     * @return boolean true if no problem
     * @access private
     */
-    function _cleanDir($dir, $group = false, $mode = 'ingroup')     
+    function _cleanDir($dir, $group = false, $mode = 'ingroup')
     {
         if ($this->_fileNameProtection) {
             $motif = ($group) ? 'cache_'.md5($group).'_' : 'cache_';
@@ -621,7 +622,7 @@ class Cache_Lite
             $motif = ($group) ? 'cache_'.$group.'_' : 'cache_';
         }
         if ($this->_memoryCaching) {
-	    foreach($this->_memoryCachingArray as $key => $v) {
+        foreach($this->_memoryCachingArray as $key => $v) {
                 if (strpos($key, $motif) !== false) {
                     unset($this->_memoryCachingArray[$key]);
                     $this->_memoryCachingCounter = $this->_memoryCachingCounter - 1;
@@ -714,7 +715,7 @@ class Cache_Lite
             $hash = md5($suffix);
             for ($i=0 ; $i<$this->_hashedDirectoryLevel ; $i++) {
                 $root = $root . 'cache_' . substr($hash, 0, $i + 1) . '/';
-            }   
+            }
         }
         $this->_fileName = $suffix;
         $this->_file = $root.$suffix;
@@ -730,7 +731,7 @@ class Cache_Lite
     {
         $fp = @fopen($this->_file, "rb");
         if ($fp) {
-	    if ($this->_fileLocking) @flock($fp, LOCK_SH);
+        if ($this->_fileLocking) @flock($fp, LOCK_SH);
             clearstatcache();
             $length = @filesize($this->_file);
             $mqr = get_magic_quotes_runtime();
@@ -803,7 +804,7 @@ class Cache_Lite
             if ($this->_fileLocking) @flock($fp, LOCK_UN);
             @fclose($fp);
             return true;
-        }      
+        }
         return $this->raiseError('Cache_Lite : Unable to write cache file : '.$this->_file, -1);
     }
        
