@@ -466,7 +466,6 @@
 						} 
 					}
 					elseif(strcasecmp($r, $path) == 0) {
-						echo "you";
 						return true;
 					} 
 				}
