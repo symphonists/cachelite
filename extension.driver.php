@@ -457,6 +457,10 @@
 					elseif(substr($r, -1) == '*') {
 						// page/* is the same as page*
 						$offset = substr($r, -2) == '/' ? 2 : 1;
+						if($r != '*') {
+							 $e = explode("/", $r);
+							 $r = str_replace($e, NULL, $r);
+						}
 						if (strncasecmp($path, $r, strlen($r) - $offset) == 0) {
 							return true;
 						}
