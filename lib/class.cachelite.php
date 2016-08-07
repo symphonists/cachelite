@@ -627,9 +627,9 @@ class Cache_Lite
                     $this->_memoryCachingCounter = $this->_memoryCachingCounter - 1;
                 }
             }
-                if ($this->_onlyMemoryCaching) {
-                    return true;
-                }
+            if ($this->_onlyMemoryCaching) {
+                return true;
+            }
         }
         if (!($dh = opendir($dir))) {
             return $this->raiseError('Cache_Lite : Unable to open cache directory !', -4);
