@@ -463,11 +463,11 @@
 						}
 						if (strncasecmp($path, $r, strlen($r) - $offset) == 0) {
 							return true;
-						} 
+						}
 					}
 					elseif(strcasecmp($r, $path) == 0) {
 						return true;
-					} 
+					}
 				}
 			}
 			return false;

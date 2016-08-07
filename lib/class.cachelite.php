@@ -622,15 +622,15 @@ class Cache_Lite
             $motif = ($group) ? 'cache_'.$group.'_' : 'cache_';
         }
         if ($this->_memoryCaching) {
-        foreach($this->_memoryCachingArray as $key => $v) {
-                if (strpos($key, $motif) !== false) {
-                    unset($this->_memoryCachingArray[$key]);
-                    $this->_memoryCachingCounter = $this->_memoryCachingCounter - 1;
+            foreach($this->_memoryCachingArray as $key => $v) {
+                    if (strpos($key, $motif) !== false) {
+                        unset($this->_memoryCachingArray[$key]);
+                        $this->_memoryCachingCounter = $this->_memoryCachingCounter - 1;
+                    }
                 }
-            }
-            if ($this->_onlyMemoryCaching) {
-                return true;
-            }
+                if ($this->_onlyMemoryCaching) {
+                    return true;
+                }
         }
         if (!($dh = opendir($dir))) {
             return $this->raiseError('Cache_Lite : Unable to open cache directory !', -4);
@@ -731,39 +731,39 @@ class Cache_Lite
     {
         $fp = @fopen($this->_file, "rb");
         if ($fp) {
-        if ($this->_fileLocking) @flock($fp, LOCK_SH);
-            clearstatcache();
-            $length = @filesize($this->_file);
-            $mqr = get_magic_quotes_runtime();
-            if ($mqr) {
-                set_magic_quotes_runtime(0);
-            }
-            if ($this->_readControl) {
-                $hashControl = @fread($fp, 32);
-                $length = $length - 32;
-            } 
-            if ($length) {
-                $data = @fread($fp, $length);
-            } else {
-                $data = '';
-            }
-            if ($mqr) {
-                set_magic_quotes_runtime($mqr);
-            }
-            if ($this->_fileLocking) @flock($fp, LOCK_UN);
-            @fclose($fp);
-            if ($this->_readControl) {
-                $hashData = $this->_hash($data, $this->_readControlType);
-                if ($hashData != $hashControl) {
-                    if (!(is_null($this->_lifeTime))) {
-                        @touch($this->_file, time() - 2*abs($this->_lifeTime)); 
-                    } else {
-                        @unlink($this->_file);
-                    }
-                    return false;
+            if ($this->_fileLocking) @flock($fp, LOCK_SH);
+                clearstatcache();
+                $length = @filesize($this->_file);
+                $mqr = get_magic_quotes_runtime();
+                if ($mqr) {
+                    set_magic_quotes_runtime(0);
                 }
-            }
-            return $data;
+                if ($this->_readControl) {
+                    $hashControl = @fread($fp, 32);
+                    $length = $length - 32;
+                } 
+                if ($length) {
+                    $data = @fread($fp, $length);
+                } else {
+                    $data = '';
+                }
+                if ($mqr) {
+                    set_magic_quotes_runtime($mqr);
+                }
+                if ($this->_fileLocking) @flock($fp, LOCK_UN);
+                @fclose($fp);
+                if ($this->_readControl) {
+                    $hashData = $this->_hash($data, $this->_readControlType);
+                    if ($hashData != $hashControl) {
+                        if (!(is_null($this->_lifeTime))) {
+                            @touch($this->_file, time() - 2*abs($this->_lifeTime)); 
+                        } else {
+                            @unlink($this->_file);
+                        }
+                        return false;
+                    }
+                }
+                return $data;
         }
         return $this->raiseError('Cache_Lite : Unable to read cache !', -2); 
     }
