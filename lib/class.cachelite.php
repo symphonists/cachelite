@@ -387,7 +387,6 @@ class Cache_Lite
                 }
             }
             if ($this->_automaticCleaningFactor > 0 && ($this->_automaticCleaningFactor == 1 || mt_rand(1, $this->_automaticCleaningFactor) == 1)) {
-                die;
                 $this->clean(false, 'old');
             }
             if ($this->_writeControl) {
