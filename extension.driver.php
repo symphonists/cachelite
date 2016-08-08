@@ -448,7 +448,6 @@
 			$rules = array_filter(array_map('trim', $rules));
 			if(count($rules) > 0) {
 				foreach($rules as $r) {
-<<<<<<< HEAD
 					// Make sure we're matching `url/blah` not `/url/blah
 					$r = "/" . trim($r, "/"); 
 					//wildcard
@@ -469,32 +468,13 @@
 					}
 					// perfect match
 					else if(strcasecmp($r, $path) == 0) {
-=======
-					$r = str_replace('http://', NULL, $r);
-					$r = str_replace(DOMAIN . '/', NULL, $r);
-					$r = "/" . trim($r, "/"); # Make sure we're matching `/url/blah` not `url/blah
-					if($r == '*') {
-						return true;
-					}
-					elseif(substr($r, -1) == '*') {
-						// page/* is the same as page*
-						$offset = substr($r, -2) == '/' ? 2 : 1;
-						if($r != '*') {
-							 $e = explode("/", $r);
-							 $r = str_replace($e, NULL, $r);
-						}
-						if (strncasecmp($path, $r, strlen($r) - $offset) == 0) {
-							return true;
-						}
-					}
-					elseif(strcasecmp($r, $path) == 0) {
->>>>>>> 3024e03f0429105cebe6b59f173af2fc2faadade
 						return true;
 					}
 				}
 			}
 			return false;
 		}
+
 
 		/*-------------------------------------------------------------------------
 			Database Helpers
