@@ -515,7 +515,7 @@
 		-------------------------------------------------------------------------*/
 
 		private function _hash($url) {
-			return hash('sha512', serialize($url));
+			return hash('sha512', (__SECURE__ ? 'https:' : '').serialize($url));
 		}
 
 		private function _updateFromGetValues() {
