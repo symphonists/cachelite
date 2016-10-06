@@ -15,6 +15,9 @@
 		</author>
 	</authors>
 	<releases>
+		<release version="1.3.3" date="2016-08-07" min="2.3.x" max="2.x.x">
+			- Fixed an issue with Excluding pages
+		</release>
 		<release version="1.3.2" date="2016-05-17" min="2.3.x" max="2.x.x">
 			- Fixed an issue when the page xml is not valid
 		</release>

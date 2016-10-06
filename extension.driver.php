@@ -445,29 +445,36 @@
 			$path = "/" . implode("/", $segments);
 
 			$rules = file(MANIFEST . '/cachelite-excluded-pages', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-			$rules = array_map('trim', $rules);
+			$rules = array_filter(array_map('trim', $rules));
 			if(count($rules) > 0) {
 				foreach($rules as $r) {
-					$r = str_replace('http://', NULL, $r);
-					$r = str_replace(DOMAIN . '/', NULL, $r);
-					$r = "/" . trim($r, "/"); # Make sure we're matching `/url/blah` not `url/blah
+					// Make sure we're matching `url/blah` not `/url/blah
+					$r = "/" . trim($r, "/"); 
+					//wildcard
 					if($r == '*') {
 						return true;
 					}
-					elseif(substr($r, -1) == '*') {
-						// page/* is the same as page*
-						$offset = substr($r, -2) == '/' ? 2 : 1;
-						if (strncasecmp($path, $r, strlen($r) - $offset) == 0) {
-							return true;
-						}
+					// wildcard after
+					else if(substr($r, -1) == '*' && strncasecmp($path, $r, strlen($r) - 2) == 0) {
+						return true;
 					}
-					elseif(strcasecmp($r, $path) == 0) {
+					// wildcard before
+					else if(substr($r, -1) == '*' && strpos($r, $path) !== false) {
+						return true;
+					}
+					// wildcard before and after
+					else if(substr($r, -1) == '*' && substr($r, 0) == '*' && strncasecmp($path, $r, strlen($r) - 2) == 0) {
+						return true;
+					}
+					// perfect match
+					else if(strcasecmp($r, $path) == 0) {
 						return true;
 					}
 				}
 			}
 			return false;
 		}
+
 
 		/*-------------------------------------------------------------------------
 			Database Helpers
