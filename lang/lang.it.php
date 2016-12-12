@@ -60,5 +60,3 @@
 		'In questo caso, la cache per <code>http://dominio.com/article/123/</code> verr&agrave; svuotata. In caso contrario, in assenza di un URL, verr&agrave; svuotata la cache per la pagina corrente (quella specificata nell\'attributo <code>action</code> del tuo form):',
 
 	);
-
-?>

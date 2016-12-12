@@ -26,13 +26,16 @@
 			Symphony::Configuration()->write();
 
 			# Remove file
-			if(file_exists(MANIFEST . '/cachelite-excluded-pages')) unlink(MANIFEST . '/cachelite-excluded-pages');
+			if (@file_exists(MANIFEST . '/cachelite-excluded-pages')) {
+				@unlink(MANIFEST . '/cachelite-excluded-pages');
+			}
 
 			# Remove extension table
 			Symphony::Database()->query("DROP TABLE `tbl_cachelite_references`");
 		}
 
-		public function install() {
+		public function install()
+		{
 			# Create extension table
 			Symphony::Database()->query("
 				CREATE TABLE `tbl_cachelite_references` (
@@ -43,7 +46,9 @@
 				) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci
 			");
 
-			if(!file_exists(MANIFEST . '/cachelite-excluded-pages')) touch(MANIFEST . '/cachelite-excluded-pages');
+			if (!@file_exists(MANIFEST . '/cachelite-excluded-pages')) {
+				@touch(MANIFEST . '/cachelite-excluded-pages');
+			}
 
 			# Base configuration
 			Symphony::Configuration()->set('lifetime', '86400', 'cachelite');
@@ -53,7 +58,8 @@
 			return Symphony::Configuration()->write();
 		}
 
-		public function getSubscribedDelegates() {
+		public function getSubscribedDelegates()
+		{
 			return array(
 				array(
 					'page'		=> '/frontend/',
@@ -137,8 +143,8 @@
 			Preferences
 		-------------------------------------------------------------------------*/
 
-		public function append_preferences($context) {
-
+		public function append_preferences($context)
+		{
 			# Add new fieldset
 			$group = new XMLElement('fieldset');
 			$group->setAttribute('class', 'settings');
@@ -160,7 +166,9 @@
 			$hidden = Widget::Input('settings[cachelite][show-comments]', 'no', 'hidden');
 			$input = Widget::Input('settings[cachelite][show-comments]', 'yes', 'checkbox');
 			$input->setAttribute('id', 'cachelite-show-comments');
-			if(Symphony::Configuration()->get('show-comments', 'cachelite') == 'yes') $input->setAttribute('checked', 'checked');
+			if (Symphony::Configuration()->get('show-comments', 'cachelite') == 'yes') {
+				$input->setAttribute('checked', 'checked');
+			}
 			$label->setValue(__('%s Show comments in page source?', array($hidden->generate() . $input->generate())));
 			$group->appendChild($label);
 
@@ -169,13 +177,16 @@
 			$hidden = Widget::Input('settings[cachelite][backend-delegates]', 'no', 'hidden');
 			$input = Widget::Input('settings[cachelite][backend-delegates]', 'yes', 'checkbox');
 			$input->setAttribute('id', 'cachelite-backend-delegates');
-			if(Symphony::Configuration()->get('backend-delegates', 'cachelite') == 'yes') $input->setAttribute('checked', 'checked');
+			if (Symphony::Configuration()->get('backend-delegates', 'cachelite') == 'yes') {
+				$input->setAttribute('checked', 'checked');
+			}
 			$label->setValue( __('%s Expire cache when entries are created/updated through the backend?', array($hidden->generate() . $input->generate())));
 			$group->appendChild($label);
 			$context['wrapper']->appendChild($group);
 		}
 
-		public function save_preferences($context) {
+		public function save_preferences($context)
+		{
 			$this->_save_excluded_pages(stripslashes($_POST['cachelite']['excluded-pages']));
 		}
 
@@ -183,16 +194,18 @@
 			Events
 		-------------------------------------------------------------------------*/
 
-		public function addFilterToEventEditor($context) {
+		public function addFilterToEventEditor($context)
+		{
 			// adds filters to Filters select box on Event editor page
 			$context['options'][] = array('cachelite-entry', @in_array('cachelite-entry', $context['selected']) , 'CacheLite: ' . __('Expire cache for pages showing this entry'));
 			$context['options'][] = array('cachelite-section', @in_array('cachelite-section', $context['selected']) , 'CacheLite: ' . __('Expire cache for pages showing content from this section'));
 			$context['options'][] = array('cachelite-url', @in_array('cachelite-url', $context['selected']) , 'CacheLite: ' . __('Expire cache for the passed URL'));
 		}
 
-		public function processEventData($context) {
+		public function processEventData($context)
+		{
 			// flush the cache based on entry IDs
-			if(in_array('cachelite-entry', $context['event']->eParamFILTERS) && isset($_POST['cachelite']['flush-entry'])) {
+			if (in_array('cachelite-entry', $context['event']->eParamFILTERS) && isset($_POST['cachelite']['flush-entry'])) {
 				if (is_array($_POST['id'])) {
 					foreach($_POST['id'] as $id) {
 						$this->clear_pages_by_reference($id, 'entry');
@@ -203,14 +216,15 @@
 			}
 
 			// flush cache based on the Section ID of the section this Event accesses
-			if(in_array('cachelite-section', $context['event']->eParamFILTERS) && isset($_POST['cachelite']['flush-section'])) {
+			if (in_array('cachelite-section', $context['event']->eParamFILTERS) && isset($_POST['cachelite']['flush-section'])) {
 				$this->clear_pages_by_reference($context['event']->getSource(), 'section');
 			}
 		}
 
-		public function processPostSaveData($context) {
+		public function processPostSaveData($context)
+		{
 			# flush the cache based on explicit value
-			if(in_array('cachelite-url', $context['event']->eParamFILTERS)) {
+			if (in_array('cachelite-url', $context['event']->eParamFILTERS)) {
 				$flush = (empty($_POST['cachelite']['flush-url'])) ? $this->_url : $this->_hash(General::sanitize($_POST['cachelite']['flush-url']));
 				$this->_cacheLite->remove($flush, 'default', true);
 			}
@@ -250,10 +264,13 @@
 			Caching
 		-------------------------------------------------------------------------*/
 
-		public function intercept_page($context) {
-			if($this->_in_excluded_pages() || !$this->_isGetRequest()) return;
-			$logged_in = Symphony::isLoggedIn();
+		public function intercept_page($context)
+		{
+			if ($this->_in_excluded_pages() || !$this->_isGetRequest()) {
+				return;
+			}
 
+			$logged_in = Symphony::isLoggedIn();
 			$this->_updateFromGetValues();
 
 			if ($logged_in && array_key_exists('flush', $this->_get) && $this->_get['flush'] == 'site')
@@ -271,28 +288,28 @@
 				# Add comment
 				if ($this->_get_comment_pref() == 'yes') $output .= "<!-- Cache served: ". $this->_cacheLite->_fileName	." -->";
 
-				if(!isset($context['page_data']['type']) || !is_array($context['page_data']['type']) || empty($context['page_data']['type'])) {
+				if (!isset($context['page_data']['type']) || !is_array($context['page_data']['type']) || empty($context['page_data']['type'])) {
 					header('Content-Type: text/html; charset=utf-8');
-				} else if(@in_array('XML', $context['page_data']['type']) || @in_array('xml', $context['page_data']['type'])) {
+				} else if (@in_array('XML', $context['page_data']['type']) || @in_array('xml', $context['page_data']['type'])) {
 					header('Content-Type: text/xml; charset=utf-8');
 				} else {
 					foreach($context['page_data']['type'] as $type) {
 						$content_type = Symphony::Configuration()->get(strtolower($type), 'content-type-mappings');
 
-						if(!is_null($content_type)){
+						if (!is_null($content_type)){
 							header("Content-Type: $content_type;");
 						}
 
-						if($type{0} == '.') {
+						if ($type{0} == '.') {
 							$FileName = $page_data['handle'];
   							header("Content-Disposition: attachment; filename={$FileName}{$type}");
 						}
 					}
 				}
 
-				if(@in_array('404', $context['page_data']['type'])) {
+				if (@in_array('404', $context['page_data']['type'])) {
 					header('HTTP/1.0 404 Not Found');
-				} else if(@in_array('403', $context['page_data']['type'])) {
+				} else if (@in_array('403', $context['page_data']['type'])) {
 					header('HTTP/1.0 403 Forbidden');
 				}
 
@@ -304,8 +321,8 @@
 				header(sprintf('ETag: "%s"', $etag));
 
 				# Set proper cache headers
-				if(isset($_SERVER['HTTP_IF_MODIFIED_SINCE']) || isset($_SERVER['HTTP_IF_NONE_MATCH'])){
-					if($_SERVER['HTTP_IF_MODIFIED_SINCE'] == $modified_gmt || str_replace('"', NULL, stripslashes($_SERVER['HTTP_IF_NONE_MATCH'])) == $etag){
+				if (isset($_SERVER['HTTP_IF_MODIFIED_SINCE']) || isset($_SERVER['HTTP_IF_NONE_MATCH'])) {
+					if ($_SERVER['HTTP_IF_MODIFIED_SINCE'] == $modified_gmt || str_replace('"', NULL, stripslashes($_SERVER['HTTP_IF_NONE_MATCH'])) == $etag){
 						header('HTTP/1.1 304 Not Modified');
 						exit();
 					}
@@ -322,12 +339,12 @@
 			}
 		}
 
-		public function write_page_cache(&$output) {
-			if($this->_in_excluded_pages() || !$this->_isGetRequest()) return;
+		public function write_page_cache(&$output)
+		{
+			if ($this->_in_excluded_pages() || !$this->_isGetRequest()) return;
 			$logged_in = Symphony::isLoggedIn();
 
-			if( ! $logged_in)
-			{
+			if (!$logged_in) {
 				$this->_updateFromGetValues();
 
 				$render = $output['output'];
@@ -356,7 +373,8 @@
 		}
 
 		# Parse any Event or Section elements from the page XML
-		public function parse_page_data($context) {
+		public function parse_page_data($context)
+		{
 			$xml = @DomDocument::loadXML($context['xml']->generate());
 			if (!$xml) {
 				return;
@@ -380,7 +398,8 @@
 
 		}
 
-		public function entry_create($context) {
+		public function entry_create($context)
+		{
 			if (Symphony::Configuration()->get('backend-delegates', 'cachelite') == 'no') return;
 			// flush by Section ID
 			if (isset($context['section'])) {
@@ -388,7 +407,8 @@
 			}
 		}
 
-		public function entry_edit($context) {
+		public function entry_edit($context)
+		{
 			if (Symphony::Configuration()->get('backend-delegates', 'cachelite') == 'no') return;
 			// flush by Entry ID
 			if (isset($context['entry'])) {
@@ -396,13 +416,15 @@
 			}
 		}
 
-		public function entry_delete($context) {
+		public function entry_delete($context)
+		{
 			if (Symphony::Configuration()->get('backend-delegates', 'cachelite') == 'no') return;
 			// flush by Entry ID
 			$this->clear_pages_by_reference($context['entry_id'], 'entry');
 		}
 
-		public function clear_pages_by_reference($id, $type) {
+		public function clear_pages_by_reference($id, $type)
+		{
 			// get a list of pages matching this entry/section ID
 			$pages = $this->_get_pages_by_content($id, $type);
 			// flush the cache for each
@@ -418,56 +440,63 @@
 			Helpers
 		-------------------------------------------------------------------------*/
 
-		private function _get_lifetime() {
+		private function _get_lifetime()
+		{
 			$default_lifetime = 86400;
 			$val = Symphony::Configuration()->get('lifetime', 'cachelite');
 			return (isset($val)) ? $val : $default_lifetime;
 		}
 
-		private function _get_comment_pref() {
+		private function _get_comment_pref()
+		{
 			return Symphony::Configuration()->get('show-comments', 'cachelite');
 		}
 
-		private function _get_excluded_pages() {
+		private function _get_excluded_pages()
+		{
 			return @file_get_contents(MANIFEST . '/cachelite-excluded-pages');
 		}
 
-		private function _save_excluded_pages($string){
+		private function _save_excluded_pages($string)
+		{
 			return @file_put_contents(MANIFEST . '/cachelite-excluded-pages', $string);
 		}
 
-		private function _in_excluded_pages() {
+		private function _in_excluded_pages()
+		{
 			$segments = explode('/', $this->_get['symphony-page']);
 			$domain = explode('/', DOMAIN);
 			foreach($segments as $key => $segment) {
-				if(in_array($segment, $domain) || empty($segment)) unset($segments[$key]);
+				if (in_array($segment, $domain) || empty($segment)) {
+					unset($segments[$key]);
+				}
 			}
 			$path = "/" . implode("/", $segments);
 
 			$rules = file(MANIFEST . '/cachelite-excluded-pages', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
 			$rules = array_filter(array_map('trim', $rules));
-			if(count($rules) > 0) {
+			if (count($rules) > 0) {
 				foreach($rules as $r) {
 					// Make sure we're matching `url/blah` not `/url/blah
 					$r = "/" . trim($r, "/"); 
 					//wildcard
-					if($r == '*') {
+					if ($r == '*') {
 						return true;
 					}
 					// wildcard after
-					else if(substr($r, -1) == '*' && strncasecmp($path, $r, strlen($r) - 2) == 0) {
+					else if (substr($r, -1) == '*' && strncasecmp($path, $r, strlen($r) - 2) == 0) {
 						return true;
 					}
 					// wildcard before
-					else if(substr($r, -1) == '*' && strpos($r, $path) !== false) {
+					else if (substr($r, -1) == '*' && strpos($r, $path) !== false) {
 						return true;
 					}
 					// wildcard before and after
-					else if(substr($r, -1) == '*' && substr($r, 0) == '*' && strncasecmp($path, $r, strlen($r) - 2) == 0) {
+					else if (substr($r, -1) == '*' && substr($r, 0) == '*' && strncasecmp($path, $r, strlen($r) - 2) == 0) {
 						return true;
 					}
 					// perfect match
-					else if(strcasecmp($r, $path) == 0) {
+					else if (strcasecmp($r, $path) == 0) {
 						return true;
 					}
 				}
@@ -480,7 +509,8 @@
 			Database Helpers
 		-------------------------------------------------------------------------*/
 
-		private function _get_pages_by_content($id, $type) {
+		private function _get_pages_by_content($id, $type)
+		{
 			return Symphony::Database()->fetch(
 				sprintf(
 					"SELECT page FROM tbl_cachelite_references WHERE %s LIKE '%%|%s|%%'",
@@ -490,7 +520,8 @@
 			);
 		}
 
-		private function _delete_page_references($url) {
+		private function _delete_page_references($url)
+		{
 			Symphony::Database()->query(
 				sprintf(
 					"DELETE FROM tbl_cachelite_references WHERE page='%s'",
@@ -499,7 +530,8 @@
 			);
 		}
 
-		protected function _save_page_references($url, $sections, $entries) {
+		protected function _save_page_references($url, $sections, $entries)
+		{
 			Symphony::Database()->query(
 				sprintf(
 					"INSERT INTO tbl_cachelite_references (page, sections, entries) VALUES ('%s','%s','%s')",
@@ -514,11 +546,13 @@
 			Utilities
 		-------------------------------------------------------------------------*/
 
-		private function _hash($url) {
+		private function _hash($url)
+		{
 			return hash('sha512', (__SECURE__ ? 'https:' : '').serialize($url));
 		}
 
-		private function _updateFromGetValues() {
+		private function _updateFromGetValues()
+		{
 			// Cache sorted $_GET;
 			$this->_get = $_GET;
 			ksort($this->_get);
@@ -526,7 +560,8 @@
 			$this->_url = $this->_hash($this->_get);
 		}
 
-		private function _isGetRequest() {
+		private function _isGetRequest()
+		{
 			return $_SERVER['REQUEST_METHOD'] == 'GET' || $_SERVER['REQUEST_METHOD'] == 'HEAD';
 		}
 	}
