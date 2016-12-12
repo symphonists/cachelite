@@ -15,7 +15,7 @@
 		</author>
 	</authors>
 	<releases>
-		<release version="1.3.3" date="2016-08-07" min="2.3.x" max="2.x.x">
+		<release version="1.3.3" date="2016-12-12" min="2.3.x" max="2.x.x">
 			- Fixed an issue with Excluding pages
 		</release>
 		<release version="1.3.2" date="2016-05-17" min="2.3.x" max="2.x.x">
@@ -24,11 +24,66 @@
 		<release version="1.3.1" date="2016-03-06" min="2.3.x" max="2.x.x">
 			- Updated compatibility infos
 		</release>
-		<release version="1.3" date="2014-11-07" min="2.3.x" max="2.5.x">
+		<release version="1.3.0" date="2014-11-07" min="2.3.x" max="2.5.x">
 			- Fixed some issues (#9, #20, #22)
 			- Support for Symphony 2.5
 		</release>
-		<release version="1.2" date="2012-05-17" min="2.3.x" />
-		<release version="1.1.3" date="2011-04-05" min="2.1.0" />
+		<release version="1.2.0" date="2012-05-17" min="2.3.x">
+			- Compatible with Symphony 2.3
+			- Updated cachelite library to most recent version 1.7.12
+		</release>
+		<release version="1.1.3" date="2011-04-05" min="2.1.0">
+			- Don't cache is there is `$_POST` data
+		</release>
+		<release version="1.1.2" date="2011-04-05" min="2.1.0">
+			- Romanian translation from [vlad-ghita](https://github.com/vlad-ghita)
+			- Check context is set before clear
+		</release>
+		<release version="1.1.1" date="2011-04-05" min="2.1.0">
+			- Fix bug in excluded pages introduced by change in 1.1.0
+		</release>
+		<release version="1.1.0" date="2011-04-05" min="2.1.0">
+			- Fix bug in `?flush`
+			-  Made sure $_GET parameters are parsed consistently (i.e., regardless of order)
+		</release>
+		<release version="1.0.12" date="2011-04-05" min="2.1.0">
+			- Encode URLs
+		</release>
+		<release version="1.0.11" date="2011-04-05" min="2.1.0">
+			- Removed references to `Frontend`
+			- Cleaned up accessors
+		</release>
+		<release version="1.0.10" date="2011-04-05" min="2.1.0">
+			- Added support additional content types via the Content Type Mappings extension
+		</release>
+		<release version="1.0.9" date="2011-04-05" min="2.1.0">
+			- Added 304 header support
+		</release>
+		<release version="1.0.8" date="2011-04-05" min="2.1.0">
+			- Localisation and italian translation from [eKoeS](http://github.com/eKoeS)
+		</release>
+		<release version="1.0.7" date="2011-04-05" min="2.1.0">
+			- Minor cleanup to use newer accessors for Administration/Symphony instances
+		</release>
+		<release version="1.0.6" date="2011-04-05" min="2.1.0">
+			- Added functions for translation
+			- Fixed matching on page `?flush`
+			- Defaults for configuration
+		</release>
+		<release version="1.0.5" date="2011-04-05" min="2.1.0">
+			- Changed `intercept_page` delegate to `FrontendPageResolved`. Should now execute immediately after the Page is found, but before anything else happens.
+			- Because of the change above, headers are determined manually (as with normal pages). Supported types are HTML, XML and JSON.
+		</release>
+		<release version="1.0.4" date="2011-04-05" min="2.1.0">
+			- Added support for flushing the cache on a per-URL basis during `Event` execution
+		</release>
+		<release version="1.0.3" date="2011-04-05" min="2.1.0">
+			- Subscribe to the Delete delegate to flush pages when an entry is removed (delegate not included in Symphony 2.0.6) (Nick Dunn)
+			- Fixed bug introduced in 1.0.2 where caching was occurring for logged in users
+			- Fixed bug introduced in 1.0.2 where `?flush` was being included in the cache ID
+		</release>
+		<release version="1.0.2" date="2011-04-05" min="2.1.0">
+			- Added support for flushing the cache based on entry/section I
+		</release>
 	</releases>
 </extension>
