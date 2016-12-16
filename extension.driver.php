@@ -21,22 +21,22 @@
 
 		public function uninstall()
 		{
-			# Remove preferences
+			// Remove preferences
 			Symphony::Configuration()->remove('cachelite');
 			Symphony::Configuration()->write();
 
-			# Remove file
+			// Remove file
 			if (@file_exists(MANIFEST . '/cachelite-excluded-pages')) {
 				@unlink(MANIFEST . '/cachelite-excluded-pages');
 			}
 
-			# Remove extension table
+			// Remove extension table
 			Symphony::Database()->query("DROP TABLE `tbl_cachelite_references`");
 		}
 
 		public function install()
 		{
-			# Create extension table
+			// Create extension table
 			Symphony::Database()->query("
 				CREATE TABLE `tbl_cachelite_references` (
 				  `page` varchar(255) NOT NULL default '',
@@ -50,7 +50,7 @@
 				@touch(MANIFEST . '/cachelite-excluded-pages');
 			}
 
-			# Base configuration
+			// Base configuration
 			Symphony::Configuration()->set('lifetime', '86400', 'cachelite');
 			Symphony::Configuration()->set('show-comments', 'no', 'cachelite');
 			Symphony::Configuration()->set('backend-delegates', 'no', 'cachelite');
@@ -145,12 +145,12 @@
 
 		public function append_preferences($context)
 		{
-			# Add new fieldset
+			// Add new fieldset
 			$group = new XMLElement('fieldset');
 			$group->setAttribute('class', 'settings');
 			$group->appendChild(new XMLElement('legend', 'CacheLite'));
 
-			# Add Site Reference field
+			// Add Site Reference field
 			$label = Widget::Label(__('Cache Period'));
 			$label->appendChild(Widget::Input('settings[cachelite][lifetime]', General::Sanitize($this->_get_lifetime())));
 			$group->appendChild($label);
@@ -223,7 +223,7 @@
 
 		public function processPostSaveData($context)
 		{
-			# flush the cache based on explicit value
+			// flush the cache based on explicit value
 			if (in_array('cachelite-url', $context['event']->eParamFILTERS)) {
 				$flush = (empty($_POST['cachelite']['flush-url'])) ? $this->_url : $this->_hash(General::sanitize($_POST['cachelite']['flush-url']));
 				$this->_cacheLite->remove($flush, 'default', true);
@@ -285,7 +285,7 @@
 			}
 			else if (!$logged_in && $output = $this->_cacheLite->get($this->_url))
 			{
-				# Add comment
+				// Add comment
 				if ($this->_get_comment_pref() == 'yes') $output .= "<!-- Cache served: ". $this->_cacheLite->_fileName	." -->";
 
 				if (!isset($context['page_data']['type']) || !is_array($context['page_data']['type']) || empty($context['page_data']['type'])) {
@@ -313,14 +313,14 @@
 					header('HTTP/1.0 403 Forbidden');
 				}
 
-				# Add some cache specific headers
+				// Add some cache specific headers
 				$modified = $this->_cacheLite->lastModified();
 				$modified_gmt = gmdate('r', $modified);
 
 				$etag = md5($modified . $this->_url);
 				header(sprintf('ETag: "%s"', $etag));
 
-				# Set proper cache headers
+				// Set proper cache headers
 				if (isset($_SERVER['HTTP_IF_MODIFIED_SINCE']) || isset($_SERVER['HTTP_IF_NONE_MATCH'])) {
 					if ($_SERVER['HTTP_IF_MODIFIED_SINCE'] == $modified_gmt || str_replace('"', NULL, stripslashes($_SERVER['HTTP_IF_NONE_MATCH'])) == $etag){
 						header('HTTP/1.1 304 Not Modified');
@@ -357,7 +357,7 @@
 					$this->_cacheLite->save($render);
 				}
 
-				# Add comment
+				// Add comment
 				if ($this->_get_comment_pref() == 'yes') $render .= "<!-- Cache generated: ". $this->_cacheLite->_fileName	." -->";
 
 				header("Expires: " . gmdate("D, d M Y H:i:s", $this->_lifetime) . " GMT");
@@ -372,7 +372,7 @@
 			}
 		}
 
-		# Parse any Event or Section elements from the page XML
+		// Parse any Event or Section elements from the page XML
 		public function parse_page_data($context)
 		{
 			$xml = @DomDocument::loadXML($context['xml']->generate());
