@@ -567,8 +567,7 @@
 		private function updateFromGetValues()
 		{
 			// Cache sorted $_GET;
-			$this->_get = $_GET;
-			ksort($this->_get);
+			$this->_get = ksort(array_merge(array(), $_GET));
 			// hash it to make sure it wont overflow 255 chars
 			$this->_url = $this->computeHash($this->_get);
 		}
