@@ -1,6 +1,6 @@
 <?php
 
-	Class extension_cachelite extends Extension
+	class Extension_cachelite extends Extension
 	{
 		protected $_cacheLite = null;
 		protected $_lifetime = null;
@@ -9,15 +9,20 @@
 		private $_sections = array();
 		private $_entries = array();
 
-		public function __construct($args) {
+		public function __construct()
+		{
 			require_once('lib/class.cachelite.php');
-			$this->_lifetime = $this->_get_lifetime();
+			$this->_lifetime = $this->getLifetime();
 			$this->_cacheLite = new Cache_Lite(array(
 				'cacheDir' => CACHE . '/',
 				'lifeTime' => $this->_lifetime
 			));
-			$this->_updateFromGetValues();
+			$this->updateFromGetValues();
 		}
+
+		/*-------------------------------------------------------------------------
+			Extension
+		-------------------------------------------------------------------------*/
 
 		public function uninstall()
 		{
@@ -58,53 +63,58 @@
 			return Symphony::Configuration()->write();
 		}
 
+		public function update($previousVersion = false)
+		{
+			return true;
+		}
+
 		public function getSubscribedDelegates()
 		{
 			return array(
 				array(
 					'page'		=> '/frontend/',
 					'delegate'	=> 'FrontendPageResolved',
-					'callback'	=> 'intercept_page'
+					'callback'	=> 'interceptPage'
 				),
 				array(
 					'page'		=> '/frontend/',
 					'delegate'	=> 'FrontendOutputPreGenerate',
-					'callback'	=> 'parse_page_data'
+					'callback'	=> 'parsePageData'
 				),
 				array(
 					'page'		=> '/frontend/',
 					'delegate'	=> 'FrontendOutputPostGenerate',
-					'callback'	=> 'write_page_cache'
+					'callback'	=> 'writePageCache'
 				),
 				array(
 					'page' => '/system/preferences/',
 					'delegate' => 'AddCustomPreferenceFieldsets',
-					'callback' => 'append_preferences'
+					'callback' => 'appendPreferences'
 				),
 				array(
 					'page' => '/system/preferences/success/',
 					'delegate' => 'AddCustomPreferenceFieldsets',
-					'callback' => 'append_preferences'
+					'callback' => 'appendPreferences'
 				),
 				array(
 					'page' => '/system/preferences/',
 					'delegate' => 'Save',
-					'callback' => 'save_preferences'
+					'callback' => 'savePreferences'
 				),
 				array(
 					'page'		=> '/publish/new/',
 					'delegate'	=> 'EntryPostCreate',
-					'callback'	=> 'entry_create'
+					'callback'	=> 'entryCreate'
 				),
 				array(
 					'page'		=> '/publish/edit/',
 					'delegate'	=> 'EntryPreEdit',
-					'callback'	=> 'entry_edit'
+					'callback'	=> 'entryEdit'
 				),
 				array(
 					'page'		=> '/publish/',
 					'delegate'	=> 'EntryPreDelete',
-					'callback'	=> 'entry_delete'
+					'callback'	=> 'entryDelete'
 				),
 				array(
 					'page' => '/blueprints/events/new/',
@@ -119,12 +129,12 @@
 				array(
 					'page' => '/blueprints/events/new/',
 					'delegate' => 'AppendEventFilterDocumentation',
-					'callback' => 'add_filter_documentation_to_event'
+					'callback' => 'addFilterDocumentationToEvent'
 				),
 				array(
 					'page' => '/blueprints/events/edit/',
 					'delegate' => 'AppendEventFilterDocumentation',
-					'callback' => 'add_filter_documentation_to_event'
+					'callback' => 'addFilterDocumentationToEvent'
 				),
 				array(
 					'page' => '/frontend/',
@@ -143,7 +153,7 @@
 			Preferences
 		-------------------------------------------------------------------------*/
 
-		public function append_preferences($context)
+		public function appendPreferences($context)
 		{
 			// Add new fieldset
 			$group = new XMLElement('fieldset');
@@ -152,12 +162,12 @@
 
 			// Add Site Reference field
 			$label = Widget::Label(__('Cache Period'));
-			$label->appendChild(Widget::Input('settings[cachelite][lifetime]', General::Sanitize($this->_get_lifetime())));
+			$label->appendChild(Widget::Input('settings[cachelite][lifetime]', General::Sanitize($this->getLifetime())));
 			$group->appendChild($label);
 			$group->appendChild(new XMLElement('p', __('Length of cache period in seconds.'), array('class' => 'help')));
 
 			$label = Widget::Label(__('Excluded URLs'));
-			$label->appendChild(Widget::Textarea('cachelite[excluded-pages]', 10, 50, $this->_get_excluded_pages()));
+			$label->appendChild(Widget::Textarea('cachelite[excluded-pages]', 10, 50, $this->getExcludedPages()));
 			$group->appendChild($label);
 			$group->appendChild(new XMLElement('p', __('Add a line for each URL you want to be excluded from the cache. Add a <code>*</code> to the end of the URL for wildcard matches.'), array('class' => 'help')));
 
@@ -185,9 +195,9 @@
 			$context['wrapper']->appendChild($group);
 		}
 
-		public function save_preferences($context)
+		public function savePreferences($context)
 		{
-			$this->_save_excluded_pages(stripslashes($_POST['cachelite']['excluded-pages']));
+			$this->saveExcludedPages(stripslashes($_POST['cachelite']['excluded-pages']));
 		}
 
 		/*-------------------------------------------------------------------------
@@ -208,16 +218,16 @@
 			if (in_array('cachelite-entry', $context['event']->eParamFILTERS) && isset($_POST['cachelite']['flush-entry'])) {
 				if (is_array($_POST['id'])) {
 					foreach($_POST['id'] as $id) {
-						$this->clear_pages_by_reference($id, 'entry');
+						$this->clearPagesByReference($id, 'entry');
 					}
 				} elseif (isset($_POST['id'])) {
-					$this->clear_pages_by_reference($_POST['id'], 'entry');
+					$this->clearPagesByReference($_POST['id'], 'entry');
 				}
 			}
 
 			// flush cache based on the Section ID of the section this Event accesses
 			if (in_array('cachelite-section', $context['event']->eParamFILTERS) && isset($_POST['cachelite']['flush-section'])) {
-				$this->clear_pages_by_reference($context['event']->getSource(), 'section');
+				$this->clearPagesByReference($context['event']->getSource(), 'section');
 			}
 		}
 
@@ -225,12 +235,14 @@
 		{
 			// flush the cache based on explicit value
 			if (in_array('cachelite-url', $context['event']->eParamFILTERS)) {
-				$flush = (empty($_POST['cachelite']['flush-url'])) ? $this->_url : $this->_hash(General::sanitize($_POST['cachelite']['flush-url']));
+				$flush = (empty($_POST['cachelite']['flush-url']))
+					? $this->_url
+					: $this->computeHash(General::sanitize($_POST['cachelite']['flush-url']));
 				$this->_cacheLite->remove($flush, 'default', true);
 			}
 		}
 
-		public function add_filter_documentation_to_event($context)
+		public function addFilterDocumentationToEvent($context)
 		{
 			if (in_array('cachelite-entry', $context['selected']) || in_array('cachelite-section', $context['selected'])) $context['documentation'][] = new XMLElement('h3', __('CacheLite: Expiring the cache'));
 			if (in_array('cachelite-entry', $context['selected']))
@@ -264,14 +276,14 @@
 			Caching
 		-------------------------------------------------------------------------*/
 
-		public function intercept_page($context)
+		public function interceptPage($context)
 		{
-			if ($this->_in_excluded_pages() || !$this->_isGetRequest()) {
+			if ($this->inExcludedPages() || !$this->isGetRequest()) {
 				return;
 			}
 
 			$logged_in = Symphony::isLoggedIn();
-			$this->_updateFromGetValues();
+			$this->updateFromGetValues();
 
 			if ($logged_in && array_key_exists('flush', $this->_get) && $this->_get['flush'] == 'site')
 			{
@@ -280,13 +292,15 @@
 			else if ($logged_in && array_key_exists('flush', $this->_get))
 			{
 				unset($this->_get['flush']);
-				$url = $this->_hash($this->_get);
+				$url = $this->computeHash($this->_get);
 				$this->_cacheLite->remove($url, 'default', true);
 			}
 			else if (!$logged_in && $output = $this->_cacheLite->get($this->_url))
 			{
 				// Add comment
-				if ($this->_get_comment_pref() == 'yes') $output .= "<!-- Cache served: ". $this->_cacheLite->_fileName	." -->";
+				if ($this->getCommentPref() == 'yes') {
+					$output .= "<!-- Cache served: ". $this->_cacheLite->_fileName ." -->";
+				}
 
 				if (!isset($context['page_data']['type']) || !is_array($context['page_data']['type']) || empty($context['page_data']['type'])) {
 					header('Content-Type: text/html; charset=utf-8');
@@ -339,26 +353,28 @@
 			}
 		}
 
-		public function write_page_cache(&$output)
+		public function writePageCache(&$output)
 		{
-			if ($this->_in_excluded_pages() || !$this->_isGetRequest()) return;
+			if ($this->inExcludedPages() || !$this->isGetRequest()) return;
 			$logged_in = Symphony::isLoggedIn();
 
 			if (!$logged_in) {
-				$this->_updateFromGetValues();
+				$this->updateFromGetValues();
 
 				$render = $output['output'];
 
 				// rebuild entry/section reference list for this page
-				$this->_delete_page_references($this->_url);
-				$this->_save_page_references($this->_url, $this->_sections, $this->_entries);
+				$this->deletePageReferences($this->_url);
+				$this->savePageReferences($this->_url, $this->_sections, $this->_entries);
 
 				if (!$this->_cacheLite->get($this->_url)) {
 					$this->_cacheLite->save($render);
 				}
 
 				// Add comment
-				if ($this->_get_comment_pref() == 'yes') $render .= "<!-- Cache generated: ". $this->_cacheLite->_fileName	." -->";
+				if ($this->getCommentPref() == 'yes') {
+					$render .= "<!-- Cache generated: ". $this->_cacheLite->_fileName ." -->";
+				}
 
 				header("Expires: " . gmdate("D, d M Y H:i:s", $this->_lifetime) . " GMT");
 				header("Cache-Control: max-age=" . $this->_lifetime . ", must-revalidate");
@@ -366,14 +382,13 @@
 				header("X-Frame-Options: SAMEORIGIN");
 				header("Access-Control-Allow-Origin: " . URL);
 				header(sprintf('Content-Length: %d', strlen($render)));
-
-				print $render;
+				echo $render;
 				exit();
 			}
 		}
 
 		// Parse any Event or Section elements from the page XML
-		public function parse_page_data($context)
+		public function parsePageData($context)
 		{
 			$xml = @DomDocument::loadXML($context['xml']->generate());
 			if (!$xml) {
@@ -395,74 +410,72 @@
 
 			$this->_sections = array_unique($sections);
 			$this->_entries = array_unique($entries);
-
 		}
 
-		public function entry_create($context)
+		public function entryCreate($context)
 		{
 			if (Symphony::Configuration()->get('backend-delegates', 'cachelite') == 'no') return;
 			// flush by Section ID
 			if (isset($context['section'])) {
-				$this->clear_pages_by_reference($context['section']->get('id'), 'section');
+				$this->clearPagesByReference($context['section']->get('id'), 'section');
 			}
 		}
 
-		public function entry_edit($context)
+		public function entryEdit($context)
 		{
 			if (Symphony::Configuration()->get('backend-delegates', 'cachelite') == 'no') return;
 			// flush by Entry ID
 			if (isset($context['entry'])) {
-				$this->clear_pages_by_reference($context['entry']->get('id'), 'entry');
+				$this->clearPagesByReference($context['entry']->get('id'), 'entry');
 			}
 		}
 
-		public function entry_delete($context)
+		public function entryDelete($context)
 		{
 			if (Symphony::Configuration()->get('backend-delegates', 'cachelite') == 'no') return;
 			// flush by Entry ID
-			$this->clear_pages_by_reference($context['entry_id'], 'entry');
+			$this->clearPagesByReference($context['entry_id'], 'entry');
 		}
 
-		public function clear_pages_by_reference($id, $type)
+		public function clearPagesByReference($id, $type)
 		{
 			// get a list of pages matching this entry/section ID
-			$pages = $this->_get_pages_by_content($id, $type);
+			$pages = $this->getPagesByContent($id, $type);
 			// flush the cache for each
 			foreach($pages as $page) {
 				$url = $page['page'];
 				$this->_cacheLite->remove($url, 'default', true);
-				$this->_delete_page_references($url);
+				$this->deletePageReferences($url);
 			}
-
 		}
 
 		/*-------------------------------------------------------------------------
 			Helpers
 		-------------------------------------------------------------------------*/
 
-		private function _get_lifetime()
+		private function getLifetime()
 		{
 			$default_lifetime = 86400;
 			$val = Symphony::Configuration()->get('lifetime', 'cachelite');
 			return (isset($val)) ? $val : $default_lifetime;
 		}
 
-		private function _get_comment_pref()
+		private function getCommentPref()
 		{
 			return Symphony::Configuration()->get('show-comments', 'cachelite');
 		}
 
-		private function _get_excluded_pages()
+		private function getExcludedPages()
 		{
 			return @file_get_contents(MANIFEST . '/cachelite-excluded-pages');
 		}
 
-		private function _save_excluded_pages($string)
+		private function saveExcludedPages($string)
 		{
 			return @file_put_contents(MANIFEST . '/cachelite-excluded-pages', $string);
 		}
 
-		private function _in_excluded_pages()
+		private function inExcludedPages()
 		{
 			$segments = explode('/', $this->_get['symphony-page']);
 			$domain = explode('/', DOMAIN);
@@ -509,7 +522,7 @@
 			Database Helpers
 		-------------------------------------------------------------------------*/
 
-		private function _get_pages_by_content($id, $type)
+		private function getPagesByContent($id, $type)
 		{
 			return Symphony::Database()->fetch(
 				sprintf(
@@ -520,7 +533,7 @@
 			);
 		}
 
-		private function _delete_page_references($url)
+		private function deletePageReferences($url)
 		{
 			Symphony::Database()->query(
 				sprintf(
@@ -530,7 +543,7 @@
 			);
 		}
 
-		protected function _save_page_references($url, $sections, $entries)
+		protected function savePageReferences($url, $sections, $entries)
 		{
 			Symphony::Database()->query(
 				sprintf(
@@ -546,21 +559,21 @@
 			Utilities
 		-------------------------------------------------------------------------*/
 
-		private function _hash($url)
+		private function computeHash($url)
 		{
 			return hash('sha512', (__SECURE__ ? 'https:' : '').serialize($url));
 		}
 
-		private function _updateFromGetValues()
+		private function updateFromGetValues()
 		{
 			// Cache sorted $_GET;
 			$this->_get = $_GET;
 			ksort($this->_get);
 			// hash it to make sure it wont overflow 255 chars
-			$this->_url = $this->_hash($this->_get);
+			$this->_url = $this->computeHash($this->_get);
 		}
 
-		private function _isGetRequest()
+		private function isGetRequest()
 		{
 			return $_SERVER['REQUEST_METHOD'] == 'GET' || $_SERVER['REQUEST_METHOD'] == 'HEAD';
 		}
