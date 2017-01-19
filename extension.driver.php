@@ -36,7 +36,7 @@
 			}
 
 			// Remove extension table
-			Symphony::Database()->query("DROP TABLE `tbl_cachelite_references`");
+			Symphony::Database()->query("DROP TABLE IF EXISTS `tbl_cachelite_references`");
 		}
 
 		public function install()
