@@ -36,20 +36,13 @@
 			}
 
 			// Remove extension table
-			Symphony::Database()->query("DROP TABLE IF EXISTS `tbl_cachelite_references`");
+			return $this->dropPageTable();
 		}
 
 		public function install()
 		{
 			// Create extension table
-			Symphony::Database()->query("
-				CREATE TABLE `tbl_cachelite_references` (
-				  `page` varchar(255) NOT NULL default '',
-				  `sections` varchar(255) default NULL,
-				  `entries` varchar(255) default NULL,
-				  PRIMARY KEY  (`page`)
-				) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci
-			");
+			$this->createPageTable();
 
 			if (!@file_exists(MANIFEST . '/cachelite-excluded-pages')) {
 				@touch(MANIFEST . '/cachelite-excluded-pages');
@@ -524,35 +517,83 @@
 
 		private function getPagesByContent($id, $type)
 		{
-			return Symphony::Database()->fetch(
-				sprintf(
-					"SELECT page FROM tbl_cachelite_references WHERE %s LIKE '%%|%s|%%'",
-					(($type=='entry') ? 'entries' : 'sections'),
-					$id
-				)
-			);
+			try {
+				$col = $type == 'entry' ? 'entry_id' : 'section_id';
+				$id = General::intval($id);
+				return Symphony::Database()->fetch(
+					"SELECT DISTINCT `page` FROM `tbl_cachelite_references`
+						WHERE `$col` = $id "
+				);
+			} catch (Exception $ex) {
+				Symphony::Log()->pushExceptionToLog($ex);
+			}
+			return array();
 		}
 
 		private function deletePageReferences($url)
 		{
-			Symphony::Database()->query(
-				sprintf(
-					"DELETE FROM tbl_cachelite_references WHERE page='%s'",
-					$url
-				)
-			);
+			try {
+				$url = MySQL::cleanValue($url);
+				return Symphony::Database()->query(
+					"DELETE FROM `tbl_cachelite_references` WHERE `page` = '$url'"
+				);
+			} catch (Exception $ex) {
+				Symphony::Log()->pushExceptionToLog($ex);
+			}
+			return false;
 		}
 
-		protected function savePageReferences($url, $sections, $entries)
+		protected function saveReferences($reference, $url, $ids)
 		{
-			Symphony::Database()->query(
-				sprintf(
-					"INSERT INTO tbl_cachelite_references (page, sections, entries) VALUES ('%s','%s','%s')",
-					$url,
-					'|' . implode('|', $sections) . '|',
-					'|' . implode('|', $entries) . '|'
-				)
-			);
+			try {
+				$now = DateTimeObj::get('Y-m-d H:i:s');
+				$values = array();
+				foreach ($ids as $id) {
+					$id = General::intval($id);
+					$values[] = "('$url', $id, '$now')";
+				}
+				$values = implode(',', $values);
+				return Symphony::Database()->query(
+					"INSERT INTO `tbl_cachelite_references` (`page`, `$reference`, `timestamp`)
+						VALUES $values
+						ON DUPLICATE KEY UPDATE `timestamp` = '$now'"
+				);
+			} catch (Exception $ex) {
+				Symphony::Log()->pushExceptionToLog($ex);
+			}
+			return false;
+		}
+
+		protected function savePageReferences($url, array $sections, array $entries)
+		{
+			$url = MySQL::cleanValue($url);
+			// Create sections rows
+			$sections = $this->saveReferences('section_id', $url, $sections);
+			// Create entries rows
+			$entries = $this->saveReferences('entry_id', $url, $entries);
+			return $sections && $entries;
+		}
+
+		protected function createPageTable()
+		{
+			// Create extension table
+			return Symphony::Database()->query("
+				CREATE TABLE `tbl_cachelite_references` (
+				  `page` char(128) NOT NULL,
+				  `section_id` int(11) NOT NULL default 0,
+				  `entry_id` int(11) NOT NULL default 0,
+				  `timestamp` datetime NOT NULL default CURRENT_TIMESTAMP,
+				  PRIMARY KEY (`page`, `section_id`, `entry_id`),
+				  KEY `page` (`page`),
+				  KEY `section_page` (`page`, `section_id`),
+				  KEY `entry_page` (`page`, `entry_id`)
+				) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci
+			");
+		}
+
+		protected function dropPageTable()
+		{
+			return Symphony::Database()->query("DROP TABLE IF EXISTS `tbl_cachelite_references`");
 		}
 
 		/*-------------------------------------------------------------------------
