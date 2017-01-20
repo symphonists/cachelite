@@ -370,8 +370,9 @@
 
 		public function writePageCache(&$output)
 		{
-			if ($this->inExcludedPages() || !$this->isGetRequest()) return;
-			$logged_in = Symphony::isLoggedIn();
+			if ($this->inExcludedPages() || !$this->isGetRequest()) {
+				return;
+			}
 
 			$logged_in = Symphony::isLoggedIn();
 			if (!$logged_in && !$this->extensionCacheBypass()) {
@@ -405,6 +406,9 @@
 		// Parse any Event or Section elements from the page XML
 		public function parsePageData($context)
 		{
+			if ($this->inExcludedPages() || !$this->isGetRequest()) {
+				return;
+			}
 			$xml = @DomDocument::loadXML($context['xml']->generate());
 			if (!$xml) {
 				return;
