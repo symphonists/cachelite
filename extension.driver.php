@@ -426,27 +426,30 @@
 			if ($logged_in || $this->extensionCacheBypass()) {
 				return;
 			}
+			try {
+				$xml = @DomDocument::loadXML($context['xml']->generate());
+				if (!$xml) {
+					return;
+				}
+				$xpath = new DOMXPath($xml);
 
-			$xml = @DomDocument::loadXML($context['xml']->generate());
-			if (!$xml) {
-				return;
+				$sections_xpath = $xpath->query('//section[@id]');
+				$sections = array();
+				foreach($sections_xpath as $section) {
+					$sections[] = $section->getAttribute('id');
+				}
+
+				$entries_xpath = $xpath->query('//entry[@id] | //item[@id]');
+				$entries = array();
+				foreach($entries_xpath as $entry) {
+					$entries[] = $entry->getAttribute('id');
+				}
+
+				$this->_sections = array_unique($sections);
+				$this->_entries = array_unique($entries);
+			} catch (Exception $ex) {
+				Symphony::Log()->pushExceptionToLog($ex);
 			}
-			$xpath = new DOMXPath($xml);
-
-			$sections_xpath = $xpath->query('//section[@id and @handle]');
-			$sections = array();
-			foreach($sections_xpath as $section) {
-				$sections[] = $section->getAttribute('id');
-			}
-
-			$entries_xpath = $xpath->query('//entry[@id]');
-			$entries = array();
-			foreach($entries_xpath as $entry) {
-				$entries[] = $entry->getAttribute('id');
-			}
-
-			$this->_sections = array_unique($sections);
-			$this->_entries = array_unique($entries);
 		}
 
 		public function entryCreate($context)
