@@ -60,6 +60,10 @@
 
 		public function update($previousVersion = false)
 		{
+			if (version_compare($previousVersion, '2.0.0', '<')) {
+				$this->dropPageTable();
+				$this->createPageTable();
+			}
 			return true;
 		}
 
