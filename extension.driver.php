@@ -419,9 +419,14 @@
 		// Parse any Event or Section elements from the page XML
 		public function parsePageData($context)
 		{
-			if ($this->inExcludedPages() || !$this->isGetRequest()) {
+			if ($this->inExcludedPages() || !$this->isGetRequest() || $this->isErrorTemplate()) {
 				return;
 			}
+			$logged_in = Symphony::isLoggedIn();
+			if ($logged_in || $this->extensionCacheBypass()) {
+				return;
+			}
+
 			$xml = @DomDocument::loadXML($context['xml']->generate());
 			if (!$xml) {
 				return;
