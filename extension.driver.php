@@ -8,6 +8,7 @@
 		protected $_get = null;
 		private $_sections = array();
 		private $_entries = array();
+		const CACHE_GROUP = 'cachelite';
 
 		public function __construct()
 		{
@@ -251,7 +252,7 @@
 				$flush = (empty($_POST['cachelite']['flush-url']))
 					? $this->_url
 					: $this->computeHash(General::sanitize($_POST['cachelite']['flush-url']));
-				$this->_cacheLite->remove($flush, 'default', true);
+				$this->_cacheLite->remove($flush, self::CACHE_GROUP, true);
 			}
 		}
 
@@ -298,7 +299,7 @@
 			$logged_in = Symphony::isLoggedIn();
 			if ($logged_in && array_key_exists('flush', $this->_get) && $this->_get['flush'] == 'site') {
 				unset($this->_get['flush']);
-				$this->_cacheLite->clean();
+				$this->_cacheLite->clean(self::CACHE_GROUP);
 				$this->updateFromGetValues();
 			} else if ($logged_in && array_key_exists('flush', $this->_get)) {
 				unset($this->_get['flush']);
@@ -382,9 +383,8 @@
 				$this->deletePageReferences($this->_url);
 				$this->savePageReferences($this->_url, $this->_sections, $this->_entries);
 
-				if (!$this->_cacheLite->get($this->_url)) {
-					$this->_cacheLite->save($render);
-				}
+				// Actually write the cache
+				$this->_cacheLite->save($render, $this->_url, self::CACHE_GROUP);
 
 				// Add comment
 				if ($this->getCommentPref() == 'yes') {
@@ -459,7 +459,7 @@
 			// flush the cache for each
 			foreach($pages as $page) {
 				$url = $page['page'];
-				$this->_cacheLite->remove($url, 'default', true);
+				$this->_cacheLite->remove($url, self::CACHE_GROUP, true);
 				$this->deletePageReferences($url);
 			}
 		}
