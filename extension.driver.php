@@ -8,6 +8,7 @@
 		protected $_get = null;
 		private $_sections = array();
 		private $_entries = array();
+		private $_pagedata = array();
 		const CACHE_GROUP = 'cachelite';
 
 		public function __construct()
@@ -290,9 +291,54 @@
 			Caching
 		-------------------------------------------------------------------------*/
 
+		protected function computeEtag()
+		{
+			$lastModified = $this->_cacheLite->lastModified();
+			return md5($lastModified . $this->_url);
+		}
+
+		public function writeCacheHeaders($cacheHit = 'MISS')
+		{
+			// Kill session
+			@session_unset();
+			@session_destroy();
+			header_remove('Set-Cookie');
+			// Cache headers
+			$lastModified = $this->_cacheLite->lastModified();
+			$etag = $this->computeEtag();
+			header("Cache-Control: public, max-age=" . $this->_lifetime . ", must-revalidate");
+			header("Expires: " . gmdate("D, d M Y H:i:s", $lastModified + $this->_lifetime) . " GMT");
+			header("Last-Modified: " . gmdate('D, d M Y H:i:s', $lastModified) . ' GMT');
+			header("ETag: \"$etag\"");
+			header("Access-Control-Allow-Origin: " . URL);
+			header("X-Frame-Options: SAMEORIGIN");
+			header("X-Cache-Status: $cacheHit");
+			header_remove('Pragma');
+			// Add custom content type
+			if (!isset($this->_pagedata['type']) || !is_array($this->_pagedata['type']) || empty($this->_pagedata['type'])) {
+				header('Content-Type: text/html; charset=utf-8');
+			} else if (@in_array('XML', $this->_pagedata['type']) || @in_array('xml', $this->_pagedata['type'])) {
+				header('Content-Type: text/xml; charset=utf-8');
+			} else {
+				foreach($this->_pagedata['type'] as $type) {
+					$content_type = Symphony::Configuration()->get(strtolower($type), 'content-type-mappings');
+
+					if (!is_null($content_type)){
+						header("Content-Type: $content_type;");
+					}
+
+					if ($type{0} == '.') {
+						$FileName = $this->_pagedata['handle'];
+						header("Content-Disposition: attachment; filename={$FileName}{$type}");
+					}
+				}
+			}
+		}
+
 		public function interceptPage($context)
 		{
-			if ($this->inExcludedPages() || !$this->isGetRequest()) {
+			$this->_pagedata = $context['page_data'];
+			if ($this->inExcludedPages() || !$this->isGetRequest() || $this->isErrorTemplate()) {
 				return;
 			}
 
@@ -303,66 +349,37 @@
 				$this->updateFromGetValues();
 			} else if ($logged_in && array_key_exists('flush', $this->_get)) {
 				unset($this->_get['flush']);
-				$url = $this->computeHash($this->_get);
-				$this->_cacheLite->remove($url, self::CACHE_GROUP, true);
+				$this->updateFromGetValues();
+				$this->_cacheLite->remove($this->_url, self::CACHE_GROUP, true);
 			} else if (!$logged_in && !$this->extensionCacheBypass()) {
 				$this->updateFromGetValues();
 				$output = $this->_cacheLite->get($this->_url, self::CACHE_GROUP);
+
 				// no cache entry found
 				if (!$output) {
 					return;
 				}
-				// Add comment
-				if ($this->getCommentPref() == 'yes') {
-					$output .= "<!-- Cache served: ". $this->_cacheLite->_fileName ." -->";
-				}
 
-				if (!isset($context['page_data']['type']) || !is_array($context['page_data']['type']) || empty($context['page_data']['type'])) {
-					header('Content-Type: text/html; charset=utf-8');
-				} else if (@in_array('XML', $context['page_data']['type']) || @in_array('xml', $context['page_data']['type'])) {
-					header('Content-Type: text/xml; charset=utf-8');
-				} else {
-					foreach($context['page_data']['type'] as $type) {
-						$content_type = Symphony::Configuration()->get(strtolower($type), 'content-type-mappings');
-
-						if (!is_null($content_type)){
-							header("Content-Type: $content_type;");
-						}
-
-						if ($type{0} == '.') {
-							$FileName = $page_data['handle'];
-  							header("Content-Disposition: attachment; filename={$FileName}{$type}");
-						}
-					}
-				}
-
-				if (@in_array('404', $context['page_data']['type'])) {
-					header('HTTP/1.0 404 Not Found');
-				} else if (@in_array('403', $context['page_data']['type'])) {
-					header('HTTP/1.0 403 Forbidden');
-				}
-
-				// Add some cache specific headers
-				$modified = $this->_cacheLite->lastModified();
-				$modified_gmt = gmdate('r', $modified);
-
-				$etag = md5($modified . $this->_url);
-				header(sprintf('ETag: "%s"', $etag));
-
-				// Set proper cache headers
+				// Try to return 304
 				if (isset($_SERVER['HTTP_IF_MODIFIED_SINCE']) || isset($_SERVER['HTTP_IF_NONE_MATCH'])) {
-					if ($_SERVER['HTTP_IF_MODIFIED_SINCE'] == $modified_gmt || str_replace('"', NULL, stripslashes($_SERVER['HTTP_IF_NONE_MATCH'])) == $etag){
-						header('HTTP/1.1 304 Not Modified');
+					$modified = $this->_cacheLite->lastModified();
+					$modified_gmt = gmdate('r', $modified);
+					if ($_SERVER['HTTP_IF_MODIFIED_SINCE'] == $modified_gmt ||
+						str_replace('"', NULL, stripslashes($_SERVER['HTTP_IF_NONE_MATCH'])) == $this->computeEtag()){
+						Page::renderStatusCode(Page::HTTP_NOT_MODIFIED);
 						exit();
 					}
 				}
 
-				header('Last-Modified: ' . $modified_gmt);
-				header('Cache-Control: public');
-				header("Expires: " . gmdate("D, d M Y H:i:s", $modified + $this->_lifetime) . " GMT");
-				header("X-Frame-Options: SAMEORIGIN");
-				header("Access-Control-Allow-Origin: " . URL);
-				header(sprintf('Content-Length: %d', strlen($output)));
+				// Add comment
+				if ($this->getCommentPref() === 'yes') {
+					$output .= "<!-- Cache hit: ". $this->_cacheLite->_fileName ." -->";
+				}
+
+				// Write headers
+				$this->writeCacheHeaders('HIT');
+
+				// Send response
 				print $output;
 				exit();
 			}
@@ -370,14 +387,12 @@
 
 		public function writePageCache(&$output)
 		{
-			if ($this->inExcludedPages() || !$this->isGetRequest()) {
+			if ($this->inExcludedPages() || !$this->isGetRequest() || $this->isErrorTemplate()) {
 				return;
 			}
 
 			$logged_in = Symphony::isLoggedIn();
 			if (!$logged_in && !$this->extensionCacheBypass()) {
-				$this->updateFromGetValues();
-
 				$render = $output['output'];
 
 				// rebuild entry/section reference list for this page
@@ -388,16 +403,14 @@
 				$this->_cacheLite->save($render, $this->_url, self::CACHE_GROUP);
 
 				// Add comment
-				if ($this->getCommentPref() == 'yes') {
-					$render .= "<!-- Cache generated: ". $this->_cacheLite->_fileName ." -->";
+				if ($this->getCommentPref() === 'yes') {
+					$render .= "<!-- Cache miss: ". $this->_cacheLite->_fileName ." -->";
 				}
 
-				header("Expires: " . gmdate("D, d M Y H:i:s", $this->_lifetime) . " GMT");
-				header("Cache-Control: max-age=" . $this->_lifetime . ", must-revalidate");
-				header("Last-Modified: " . gmdate('D, d M Y H:i:s', time()) . ' GMT');
-				header("X-Frame-Options: SAMEORIGIN");
-				header("Access-Control-Allow-Origin: " . URL);
-				header(sprintf('Content-Length: %d', strlen($render)));
+				// Write headers
+				$this->writeCacheHeaders();
+
+				// Send response
 				echo $render;
 				exit();
 			}
@@ -643,5 +656,16 @@
 		private function isGetRequest()
 		{
 			return $_SERVER['REQUEST_METHOD'] == 'GET' || $_SERVER['REQUEST_METHOD'] == 'HEAD';
+		}
+
+		private function isErrorTemplate()
+		{
+			$types = $this->_pagedata['type'];
+			if (empty($types) || !is_array($types)) {
+				return $this->_errorTemplate;
+			}
+			// Check for custom http status
+			$this->_errorTemplate = @in_array('404', $types) || @in_array('403', $types);
+			return $this->_errorTemplate;
 		}
 	}
