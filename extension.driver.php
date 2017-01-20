@@ -475,8 +475,8 @@
 		private function getLifetime()
 		{
 			$default_lifetime = 86400;
-			$val = Symphony::Configuration()->get('lifetime', 'cachelite');
-			return (isset($val)) ? $val : $default_lifetime;
+			$val = General::intval(Symphony::Configuration()->get('lifetime', 'cachelite'));
+			return $val > -1 ? $val : $default_lifetime;
 		}
 
 		private function getCommentPref()
