@@ -65,3 +65,27 @@ If you pass this field with no value, it will default to the *current* URL. That
 
 Would have the same result as the previous example.
 
+### Bypassing the cache
+
+Extensions can tell cachelite to bypass the cache on particular requests. Extensions must implement the `CacheliteBypass` delegate.
+
+The delegate is as follows:
+
+```php
+/**
+ * Allows extensions to make this request
+ * bypass the cache.
+ *
+ * @delegate CacheliteBypass
+ * @since 2.0.0
+ * @param string $context
+ *  '/frontend/'
+ * @param bool $bypass
+ *  A flag to tell if the user is logged in and cache must be disabled
+ */
+Symphony::ExtensionManager()->notifyMembers('CacheliteBypass', '/frontend/', array(
+    'bypass' => &$cachebypass,
+));
+```
+
+By changing the value of `$context['bypass']` to `true` the request will not use the cache.

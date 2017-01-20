@@ -142,6 +142,26 @@
 			);
 		}
 
+		public function extensionCacheBypass()
+		{
+			$cachebypass = false;
+			/**
+			 * Allows extensions to make this request
+			 * bypass the cache.
+			 *
+			 * @delegate CacheliteBypass
+			 * @since 2.0.0
+			 * @param string $context
+			 *  '/frontend/'
+			 * @param bool $bypass
+			 *  A flag to tell if the user is logged in and cache must be disabled
+			 */
+			Symphony::ExtensionManager()->notifyMembers('CacheliteBypass', '/frontend/', array(
+				'bypass' => &$cachebypass,
+			));
+			return $cachebypass;
+		}
+
 		/*-------------------------------------------------------------------------
 			Preferences
 		-------------------------------------------------------------------------*/
@@ -276,20 +296,21 @@
 			}
 
 			$logged_in = Symphony::isLoggedIn();
-			$this->updateFromGetValues();
-
-			if ($logged_in && array_key_exists('flush', $this->_get) && $this->_get['flush'] == 'site')
-			{
+			if ($logged_in && array_key_exists('flush', $this->_get) && $this->_get['flush'] == 'site') {
+				unset($this->_get['flush']);
 				$this->_cacheLite->clean();
-			}
-			else if ($logged_in && array_key_exists('flush', $this->_get))
-			{
+				$this->updateFromGetValues();
+			} else if ($logged_in && array_key_exists('flush', $this->_get)) {
 				unset($this->_get['flush']);
 				$url = $this->computeHash($this->_get);
-				$this->_cacheLite->remove($url, 'default', true);
-			}
-			else if (!$logged_in && $output = $this->_cacheLite->get($this->_url))
-			{
+				$this->_cacheLite->remove($url, self::CACHE_GROUP, true);
+			} else if (!$logged_in && !$this->extensionCacheBypass()) {
+				$this->updateFromGetValues();
+				$output = $this->_cacheLite->get($this->_url, self::CACHE_GROUP);
+				// no cache entry found
+				if (!$output) {
+					return;
+				}
 				// Add comment
 				if ($this->getCommentPref() == 'yes') {
 					$output .= "<!-- Cache served: ". $this->_cacheLite->_fileName ." -->";
@@ -351,7 +372,8 @@
 			if ($this->inExcludedPages() || !$this->isGetRequest()) return;
 			$logged_in = Symphony::isLoggedIn();
 
-			if (!$logged_in) {
+			$logged_in = Symphony::isLoggedIn();
+			if (!$logged_in && !$this->extensionCacheBypass()) {
 				$this->updateFromGetValues();
 
 				$render = $output['output'];
