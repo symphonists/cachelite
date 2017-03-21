@@ -633,7 +633,7 @@
 				  `page` char(128) NOT NULL,
 				  `section_id` int(11) NOT NULL default 0,
 				  `entry_id` int(11) NOT NULL default 0,
-				  `timestamp` datetime NOT NULL default CURRENT_TIMESTAMP,
+				  `timestamp` datetime NOT NULL /*!50600 default CURRENT_TIMESTAMP */,
 				  PRIMARY KEY (`page`, `section_id`, `entry_id`),
 				  KEY `page` (`page`),
 				  KEY `section_page` (`page`, `section_id`),
