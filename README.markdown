@@ -14,7 +14,7 @@
 
 By default all pages are cached. You can exclude URLs from the cache by adding them to the list of excluded pages in System > Preferences. Each URL must sit on a separate line and wildcards (`*`) may be used at the end of URLs to match *everything* below that URL.
 
-Excluded pages are assumed to originate from the root. All the following examples will resolve to the same page (providing there are none below it in  the hierarchy):
+Excluded pages are assumed to originate from the root. All the following examples will resolve to the same page (providing there are none below it in the hierarchy):
 
 	/about-us/get-in-touch/*
 	http://root.com/about-us/get-in-touch/

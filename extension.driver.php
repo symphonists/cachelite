@@ -181,7 +181,7 @@
 
 			// Add Site Reference field
 			$label = Widget::Label(__('Cache Period'));
-			$label->appendChild(Widget::Input('settings[cachelite][lifetime]', General::Sanitize($this->getLifetime())));
+			$label->appendChild(Widget::Input('settings[cachelite][lifetime]', General::sanitize($this->getLifetime())));
 			$group->appendChild($label);
 			$group->appendChild(new XMLElement('p', __('Length of cache period in seconds.'), array('class' => 'help')));
 
@@ -528,39 +528,71 @@
 					unset($segments[$key]);
 				}
 			}
-			$path = "/" . implode("/", $segments);
+			$path = implode('/', $segments);
 
 			$rules = file(MANIFEST . '/cachelite-excluded-pages', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
 			$rules = array_filter(array_map('trim', $rules));
-			if (count($rules) > 0) {
-				foreach($rules as $r) {
-					// Make sure we're matching `url/blah` not `/url/blah
-					$r = "/" . trim($r, "/"); 
-					//wildcard
-					if ($r == '*') {
+
+			foreach ($rules as $r) {
+				if (static::doesRuleExcludesPath($path, $r)) {
+					return true;
+				}
+			}
+			return false;
+		}
+
+		public static function doesRuleExcludesPath($path, $r)
+		{
+			// Make sure we're matching `url/blah` not `/url/blah`
+			$r = trim($r, '/');
+			// comment
+			if (substr($r, 0, 1) === '#') {
+				return false;
+			}
+			// full wildcard
+			else if ($r === '*') {
+				return true;
+			}
+			// perfect match
+			else if (strcasecmp($r, $path) == 0) {
+				return true;
+			}
+			// wildcards
+			else if (!!$path && strlen($path) >= strlen($r)) {
+				$ruleStartsWithStar = substr($r, 0, 1) === '*';
+				$ruleEndsWithStar = substr($r, -1) === '*';
+				// wildcard before and after (*test*)
+				if ($ruleStartsWithStar && $ruleEndsWithStar) {
+					// Remove both char
+					$r = substr($r, 1, strlen($r) - 2);
+					// Lookup
+					$rPos = strpos($path, $r);
+					// Rule is found in path
+					if ($rPos !== false && $rPos > 0 && $rPos < strlen($path) - strlen($r)) {
 						return true;
 					}
-					// wildcard after
-					else if (substr($r, -1) == '*' && strncasecmp($path, $r, strlen($r) - 2) == 0) {
+				}
+				// wildcard before (*test)
+				else if ($ruleStartsWithStar) {
+					// Remove first char
+					$r = substr($r, 1);
+					// path must end with rule
+					if (strpos($path, $r) > 0) {
 						return true;
 					}
-					// wildcard before
-					else if (substr($r, -1) == '*' && strpos($r, $path) !== false) {
-						return true;
-					}
-					// wildcard before and after
-					else if (substr($r, -1) == '*' && substr($r, 0) == '*' && strncasecmp($path, $r, strlen($r) - 2) == 0) {
-						return true;
-					}
-					// perfect match
-					else if (strcasecmp($r, $path) == 0) {
+				}
+				// wildcard after (test*)
+				else if ($ruleEndsWithStar) {
+					// Remove last char
+					$r = substr($r, 0, strlen($r) - 1);
+					// path must start with rule
+					if (strpos($path, $r) === 0) {
 						return true;
 					}
 				}
 			}
 			return false;
 		}
-
 
 		/*-------------------------------------------------------------------------
 			Database Helpers
