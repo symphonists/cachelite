@@ -16,6 +16,9 @@
 		</author>
 	</authors>
 	<releases>
+		<release version="2.0.2" date="2017-04-18" min="2.6.x" max="2.x.x">
+			- Fix issue where the root page was always excluded from cache (#38)
+		</release>
 		<release version="2.0.1" date="2017-03-21" min="2.6.x" max="2.x.x">
 			- Fix issue on MySQL 5.5 (#37)
 		</release>
