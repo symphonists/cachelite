@@ -16,7 +16,7 @@
 		</author>
 	</authors>
 	<releases>
-		<release version="3.0.0" date="2017-04-26" min="4.0.0" max="4.x.x">
+		<release version="3.0.0" date="TBA" min="4.0.0" max="4.x.x">
 			- Update for Symphony 4.x
 		</release>
 		<release version="2.1.2" date="2018-08-29" min="2.6.x" max="2.x.x">
