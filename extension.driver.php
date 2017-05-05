@@ -196,14 +196,14 @@
 
 			// Add Site Reference field
 			$label = Widget::Label(__('Cache Period'));
-			$label->appendChild(new XMLElement('i', __('Length of cache period in seconds.')));
 			$label->appendChild(Widget::Input('settings[cachelite][lifetime]', General::sanitize($this->getLifetime())));
 			$group->appendChild($label);
+			$group->appendChild(new XMLElement('p', __('Length of cache period in seconds.'), array('class' => 'help')));
 
 			$label = Widget::Label(__('Excluded URLs'));
-			$label->appendChild(new XMLElement('i', __('Add a line for each URL you want to be excluded from the cache. Add a <code>*</code> to the end of the URL for wildcard matches.')));
 			$label->appendChild(Widget::Textarea('cachelite[excluded-pages]', 10, 50, $this->getExcludedPages()));
 			$group->appendChild($label);
+			$group->appendChild(new XMLElement('p', __('Add a line for each URL you want to be excluded from the cache. Add a <code>*</code> to the end of the URL for wildcard matches.'), array('class' => 'help')));
 
 			$label = Widget::Label();
 			$label->setAttribute('for', 'cachelite-show-comments');
