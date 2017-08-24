@@ -384,7 +384,7 @@
 					$modified = $this->_cacheLite->lastModified();
 					$modified_gmt = gmdate('r', $modified);
 					if ($_SERVER['HTTP_IF_MODIFIED_SINCE'] == $modified_gmt ||
-						str_replace('"', NULL, stripslashes($_SERVER['HTTP_IF_NONE_MATCH'])) == $this->computeEtag()){
+						str_replace('"', null, stripslashes($_SERVER['HTTP_IF_NONE_MATCH'])) == $this->computeEtag()){
 						Page::renderStatusCode(Page::HTTP_NOT_MODIFIED);
 						exit();
 					}
@@ -756,10 +756,10 @@
 			// Create extension table
 			return Symphony::Database()->query("
 				CREATE TABLE `tbl_cachelite_references` (
-				  `page` char(128) NOT NULL,
-				  `section_id` int(11) NOT NULL default 0,
-				  `entry_id` int(11) NOT NULL default 0,
-				  `timestamp` datetime NOT NULL /*!50600 default CURRENT_TIMESTAMP */,
+				  `page` CHAR(128) NOT NULL,
+				  `section_id` INT(11) NOT NULL default 0,
+				  `entry_id` INT(11) NOT NULL default 0,
+				  `timestamp` DATETIME NOT NULL /*!50600 default CURRENT_TIMESTAMP */,
 				  PRIMARY KEY (`page`, `section_id`, `entry_id`),
 				  KEY `page` (`page`),
 				  KEY `section_page` (`page`, `section_id`),
