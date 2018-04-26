@@ -65,6 +65,24 @@ If you pass this field with no value, it will default to the *current* URL. That
 
 Would have the same result as the previous example.
 
+#### Large websites
+
+Deleting lots of cache entries may make the backend slow.
+If you feel like you are waiting too long for entries to save, it may be because deleting files on disk is slow.
+You can change the cache invalidation strategy and use a cron job to purge the cache.
+You first need to manually edit your config.php file, to set the 'clean-strategy' value to 'cron'
+
+	###### CACHELITE ######
+	'cachelite' => array(
+		...
+		'clean-strategy' => 'cron',
+	),
+	########
+
+Then, your need to configure the cron job that will purge the cache in the background, at every 5 minutes
+
+	*/5 * * * * php /path/to/website/extensions/cachelite/cron/delete_invalid.php
+
 ### Bypassing the cache
 
 Extensions can tell cachelite to bypass the cache on particular requests. Extensions must implement the `CacheliteBypass` delegate.

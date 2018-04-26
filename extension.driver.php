@@ -37,14 +37,16 @@
 				@unlink(MANIFEST . '/cachelite-excluded-pages');
 			}
 
-			// Remove extension table
+			// Remove extension tables
+			$this->dropInvalidTable();
 			return $this->dropPageTable();
 		}
 
 		public function install()
 		{
-			// Create extension table
+			// Create extension tables
 			$this->createPageTable();
+			$this->createInvalidTable();
 
 			if (!@file_exists(MANIFEST . '/cachelite-excluded-pages')) {
 				@touch(MANIFEST . '/cachelite-excluded-pages');
@@ -63,6 +65,9 @@
 			if (version_compare($previousVersion, '2.0.0', '<')) {
 				$this->dropPageTable();
 				$this->createPageTable();
+			}
+			if (version_compare($previousVersion, '2.1.0', '<')) {
+				$this->createInvalidTable();
 			}
 			return true;
 		}
@@ -116,6 +121,11 @@
 					'callback'	=> 'entryDelete'
 				),
 				array(
+					'page'		=> '/blueprints/sections/',
+					'delegate'	=> 'SectionPostEdit',
+					'callback'	=> 'sectionEdit'
+				),
+				array(
 					'page' => '/blueprints/events/new/',
 					'delegate' => 'AppendEventFilter',
 					'callback' => 'addFilterToEventEditor'
@@ -144,6 +154,11 @@
 					'page' => '/frontend/',
 					'delegate' => 'EventPostSaveFilter',
 					'callback' => 'processPostSaveData'
+				),
+				array(
+					'page' => '/backend/',
+					'delegate' => 'AppendPageAlert',
+					'callback' => 'appendPageAlert'
 				),
 			);
 		}
@@ -237,16 +252,16 @@
 			if (in_array('cachelite-entry', $context['event']->eParamFILTERS) && isset($_POST['cachelite']['flush-entry'])) {
 				if (is_array($_POST['id'])) {
 					foreach($_POST['id'] as $id) {
-						$this->clearPagesByReference($id, 'entry');
+						$this->clearPagesByStrategy($id, 'entry');
 					}
 				} elseif (isset($_POST['id'])) {
-					$this->clearPagesByReference($_POST['id'], 'entry');
+					$this->clearPagesByStrategy($_POST['id'], 'entry');
 				}
 			}
 
 			// flush cache based on the Section ID of the section this Event accesses
 			if (in_array('cachelite-section', $context['event']->eParamFILTERS) && isset($_POST['cachelite']['flush-section'])) {
-				$this->clearPagesByReference($context['event']->getSource(), 'section');
+				$this->clearPagesByStrategy($context['event']->getSource(), 'section');
 			}
 		}
 
@@ -461,7 +476,7 @@
 			if (Symphony::Configuration()->get('backend-delegates', 'cachelite') == 'no') return;
 			// flush by Section ID
 			if (isset($context['section'])) {
-				$this->clearPagesByReference($context['section']->get('id'), 'section');
+				$this->clearPagesByStrategy($context['section']->get('id'), 'section');
 			}
 		}
 
@@ -470,7 +485,7 @@
 			if (Symphony::Configuration()->get('backend-delegates', 'cachelite') == 'no') return;
 			// flush by Entry ID
 			if (isset($context['entry'])) {
-				$this->clearPagesByReference($context['entry']->get('id'), 'entry');
+				$this->clearPagesByStrategy($context['entry']->get('id'), 'entry');
 			}
 		}
 
@@ -478,7 +493,45 @@
 		{
 			if (Symphony::Configuration()->get('backend-delegates', 'cachelite') == 'no') return;
 			// flush by Entry ID
-			$this->clearPagesByReference($context['entry_id'], 'entry');
+			$this->clearPagesByStrategy($context['entry_id'], 'entry');
+		}
+
+		public function sectionEdit($context)
+		{
+			// flush by Section ID
+			if (isset($context['section_id'])) {
+				$this->clearPagesByStrategy($context['section_id'], 'section');
+			}
+		}
+
+		public function appendPageAlert($context)
+		{
+			$callback = Administration::instance()->getPageCallback();
+			$context = $callback['context'];
+			$alert = null;
+			if (!empty($context['section_handle'])) {
+				$section = SectionManager::fetchIDFromHandle($context['section_handle']);
+				if ($this->isInvalidByContent($section, 'section')) {
+					$alert = __('This section is scheduled to be removed from the cache. Website will reflect the new state soon.');
+				}
+			}
+			if (!empty($context['entry_id'])) {
+				if ($this->isInvalidByContent($context['entry_id'], 'entry')) {
+					$alert = __('This entry is scheduled to be removed from the cache. Website will reflect the new state soon.');
+				}
+			}
+			if ($alert) {
+				Administration::instance()->Page->pageAlert($alert, Alert::NOTICE);
+			}
+		}
+
+		public function clearPagesByStrategy($id, $type)
+		{
+			$strategy = Symphony::Configuration()->get('clean-strategy', 'cachelite');
+			if ($strategy === 'cron') {
+				return $this->saveInvalid($id, $type);
+			}
+			return $this->clearPagesByReference($id, $type);
 		}
 
 		public function clearPagesByReference($id, $type)
@@ -487,10 +540,15 @@
 			$pages = $this->getPagesByContent($id, $type);
 			// flush the cache for each
 			foreach($pages as $page) {
-				$url = $page['page'];
-				$this->_cacheLite->remove($url, self::CACHE_GROUP, true);
-				$this->deletePageReferences($url);
+				$this->removeByUrl($page['page']);
 			}
+			$this->optimizePageTable();
+		}
+
+		public function removeByUrl($url)
+		{
+			$this->_cacheLite->remove($url, self::CACHE_GROUP, true);
+			$this->deletePageReferences($url);
 		}
 
 		/*-------------------------------------------------------------------------
@@ -598,14 +656,14 @@
 			Database Helpers
 		-------------------------------------------------------------------------*/
 
-		private function getPagesByContent($id, $type)
+		public function getPagesByContent($id, $type)
 		{
 			try {
 				$col = $type == 'entry' ? 'entry_id' : 'section_id';
 				$id = General::intval($id);
 				return Symphony::Database()->fetch(
 					"SELECT DISTINCT `page` FROM `tbl_cachelite_references`
-						WHERE `$col` = $id "
+						WHERE `$col` = $id"
 				);
 			} catch (Exception $ex) {
 				Symphony::Log()->pushExceptionToLog($ex);
@@ -613,10 +671,25 @@
 			return array();
 		}
 
-		private function deletePageReferences($url)
+		public function isInvalidByContent($id, $type)
 		{
 			try {
-				$url = MySQL::cleanValue($url);
+				$col = $type == 'entry' ? 'entry_id' : 'section_id';
+				$id = General::intval($id);
+				return !empty(Symphony::Database()->fetch(
+					"SELECT DISTINCT `$col` FROM `tbl_cachelite_invalid`
+						WHERE `$col` = $id"
+				));
+			} catch (Exception $ex) {
+				Symphony::Log()->pushExceptionToLog($ex);
+			}
+			return false;
+		}
+
+		public function deletePageReferences($url)
+		{
+			try {
+				$url = Symphony::Database()->cleanValue($url);
 				return Symphony::Database()->query(
 					"DELETE FROM `tbl_cachelite_references` WHERE `page` = '$url'"
 				);
@@ -649,12 +722,29 @@
 
 		protected function savePageReferences($url, array $sections, array $entries)
 		{
-			$url = MySQL::cleanValue($url);
+			$url = Symphony::Database()->cleanValue($url);
 			// Create sections rows
 			$sections = $this->saveReferences('section_id', $url, $sections);
 			// Create entries rows
 			$entries = $this->saveReferences('entry_id', $url, $entries);
 			return $sections && $entries;
+		}
+
+		protected function saveInvalid($id, $type)
+		{
+			$col = $type == 'entry' ? 'entry_id' : 'section_id';
+			try {
+				$id = General::intval(Symphony::Database()->cleanValue($id));
+				return Symphony::Database()->query(
+					"INSERT INTO `tbl_cachelite_invalid` (`$col`)
+						VALUES ($id)
+						ON DUPLICATE KEY UPDATE `$col` = `$col`"
+				);
+			} catch (Exception $ex) {
+				Symphony::Log()->pushExceptionToLog($ex);
+				throw $ex;
+			}
+			return false;
 		}
 
 		protected function createPageTable()
@@ -674,9 +764,38 @@
 			");
 		}
 
-		protected function dropPageTable()
+		protected function createInvalidTable()
+		{
+			// Create extension table
+			return Symphony::Database()->query("
+				CREATE TABLE `tbl_cachelite_invalid` (
+				  `section_id` int(11) NOT NULL default 0,
+				  `entry_id` int(11) NOT NULL default 0,
+				  PRIMARY KEY (`section_id`, `entry_id`),
+				  KEY `section_id` (`section_id`),
+				  KEY `entry_id` (`entry_id`)
+				) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci
+			");
+		}
+
+		public function dropPageTable()
 		{
 			return Symphony::Database()->query("DROP TABLE IF EXISTS `tbl_cachelite_references`");
+		}
+
+		public function dropInvalidTable()
+		{
+			return Symphony::Database()->query("DROP TABLE IF EXISTS `tbl_cachelite_invalid`");
+		}
+
+		public function optimizePageTable()
+		{
+			return Symphony::Database()->query("OPTIMIZE TABLE `tbl_cachelite_references`");
+		}
+
+		public function optimizeInvalidTable()
+		{
+			return Symphony::Database()->query("OPTIMIZE TABLE `tbl_cachelite_invalid`");
 		}
 
 		/*-------------------------------------------------------------------------
