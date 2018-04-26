@@ -59,4 +59,10 @@
 
 		'Will flush the cache for <code>http://domain.tld/article/123/</code>. If no value is passed it will flush the cache of the current page (i.e., the value of <code>action=""</code> in you form):' =>
 		'Vide le cache pour <code> http: //domain.tld/article/123/ </ code>. Si aucune valeur passée, le cache de la page en cours sera vidé (La valeur de <code> action = "" </ code> dans votre formulaire):',
+
+		'This section is scheduled to be removed from the cache. Website will reflect the new state soon.' =>
+		'Cette section est prévue pour être retirée du cache. Le site Web reflètera bientôt le nouvel état.',
+
+		'This entry is scheduled to be removed from the cache. Website will reflect the new state soon.' =>
+		'Cette entrée est prévue pour être retirée du cache. Le site Web reflètera bientôt le nouvel état.',
 	);
