@@ -16,8 +16,11 @@
 		</author>
 	</authors>
 	<releases>
+		<release version="2.1.1" date="2018-06-06" min="2.6.x" max="2.x.x">
+			- Fix 2.1.0 release notes
+		</release>
 		<release version="2.1.0" date="2018-04-20" min="2.6.x" max="2.x.x">
-			- Fix issue where the root page was always excluded from cache (#38)
+			- Add a cron cache purge strategy
 		</release>
 		<release version="2.0.2" date="2017-04-18" min="2.6.x" max="2.x.x">
 			- Fix issue where the root page was always excluded from cache (#38)
