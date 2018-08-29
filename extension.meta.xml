@@ -16,6 +16,9 @@
 		</author>
 	</authors>
 	<releases>
+		<release version="2.1.2" date="2018-08-29" min="2.6.x" max="2.x.x">
+			- Fix crash on deleting entries
+		</release>
 		<release version="2.1.1" date="2018-06-06" min="2.6.x" max="2.x.x">
 			- Fix 2.1.0 release notes
 		</release>
