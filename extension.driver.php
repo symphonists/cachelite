@@ -755,7 +755,7 @@
 				return Symphony::Database()
 					->insert('tbl_cachelite_invalid')
 					->values([
-						$col = $id,
+						$col => $id,
 					])
 					->updateOnDuplicateKey()
 					->execute()
