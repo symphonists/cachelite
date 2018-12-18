@@ -773,8 +773,6 @@
 			return Symphony::Database()
 				->create('tbl_cachelite_references')
 				->ifNotExists()
-				->charset('utf8')
-				->collate('utf8_unicode_ci')
 				->fields([
 					'page' => 'char(128)',
 					'section_id' => [
@@ -812,8 +810,6 @@
 			return Symphony::Database()
 				->create('tbl_cachelite_invalid')
 				->ifNotExists()
-				->charset('utf8')
-				->collate('utf8_unicode_ci')
 				->fields([
 					'section_id' => [
 						'type' => 'int(11)',
