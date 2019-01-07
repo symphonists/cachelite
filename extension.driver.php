@@ -492,12 +492,14 @@
 		public function entryDelete($context)
 		{
 			if (Symphony::Configuration()->get('backend-delegates', 'cachelite') == 'no') return;
-			$ids = !is_array($context['entry_id']) ? array($context['entry_id']) : $context['entry_id'];
-
 			// flush by Entry ID
-			foreach ($ids as $id) {
-				$this->clearPagesByStrategy($id, 'entry');
-			}
+			$id = $context['entry_id'];
++			if (!is_array($id)) {
++				$id = array($id);
++			}
++			foreach ($id as $i) {
++				$this->clearPagesByStrategy($i, 'entry');
++			}
 		}
 
 		public function sectionEdit($context)
