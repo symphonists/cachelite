@@ -493,7 +493,7 @@
 		{
 			if (Symphony::Configuration()->get('backend-delegates', 'cachelite') == 'no') return;
 			$ids = !is_array($context['entry_id']) ? array($context['entry_id']) : $context['entry_id'];
-			
+
 			// flush by Entry ID
 			foreach ($ids as $id) {
 				$this->clearPagesByStrategy($id, 'entry');
@@ -714,29 +714,32 @@
 
 		protected function saveReferences($reference, $url, $ids)
 		{
-			try {
-				$now = DateTimeObj::get('Y-m-d H:i:s');
-				$values = array();
-				foreach ($ids as $id) {
+			$now = DateTimeObj::get('Y-m-d H:i:s');
+			$values = array();
+			$result = true;
+			foreach ($ids as $id) {
+				try {
 					$id = General::intval($id);
-					$values[] = "('$url', $id, '$now')";
-				}
-				$values = implode(',', $values);
 
-				return Symphony::Database()
-					->insert('tbl_cachelite_references')
-					->values([
-						'page' => $values[0],
-						$reference => $values[1],
-						'timestamp' => $values[2],
-					])
-					->updateOnDuplicateKey()
-					->execute()
-					->success();
-			} catch (Exception $ex) {
-				Symphony::Log()->pushExceptionToLog($ex);
+					$thisResult = Symphony::Database()
+						->insert('tbl_cachelite_references')
+						->values([
+							'page' => $url,
+							$reference => $id,
+							'timestamp' => $now,
+						])
+						->updateOnDuplicateKey()
+						->execute()
+						->success();
+					if (!$thisResult) {
+						$result = false;
+					}
+				} catch (Exception $ex) {
+					$result = false;
+					Symphony::Log()->pushExceptionToLog($ex);
+				}
 			}
-			return false;
+			return $result;
 		}
 
 		protected function savePageReferences($url, array $sections, array $entries)
