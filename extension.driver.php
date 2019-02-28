@@ -384,7 +384,7 @@
 					$modified = $this->_cacheLite->lastModified();
 					$modified_gmt = gmdate('r', $modified);
 					if ($_SERVER['HTTP_IF_MODIFIED_SINCE'] == $modified_gmt ||
-						str_replace('"', NULL, stripslashes($_SERVER['HTTP_IF_NONE_MATCH'])) == $this->computeEtag()){
+						str_replace('"', null, stripslashes($_SERVER['HTTP_IF_NONE_MATCH'])) == $this->computeEtag()){
 						Page::renderStatusCode(Page::HTTP_NOT_MODIFIED);
 						exit();
 					}
@@ -492,11 +492,13 @@
 		public function entryDelete($context)
 		{
 			if (Symphony::Configuration()->get('backend-delegates', 'cachelite') == 'no') return;
-			$ids = !is_array($context['entry_id']) ? array($context['entry_id']) : $context['entry_id'];
-			
 			// flush by Entry ID
-			foreach ($ids as $id) {
-				$this->clearPagesByStrategy($id, 'entry');
+			$id = $context['entry_id'];
+			if (!is_array($id)) {
+				$id = array($id);
+			}
+			foreach ($id as $i) {
+				$this->clearPagesByStrategy($i, 'entry');
 			}
 		}
 
@@ -665,10 +667,14 @@
 			try {
 				$col = $type == 'entry' ? 'entry_id' : 'section_id';
 				$id = General::intval($id);
-				return Symphony::Database()->fetch(
-					"SELECT DISTINCT `page` FROM `tbl_cachelite_references`
-						WHERE `$col` = $id"
-				);
+
+				return Symphony::Database()
+					->select(['page'])
+					->distinct()
+					->from('tbl_cachelite_references')
+					->where([$col => $id])
+					->execute()
+					->rows();
 			} catch (Exception $ex) {
 				Symphony::Log()->pushExceptionToLog($ex);
 			}
@@ -680,10 +686,14 @@
 			try {
 				$col = $type == 'entry' ? 'entry_id' : 'section_id';
 				$id = General::intval($id);
-				return !empty(Symphony::Database()->fetch(
-					"SELECT DISTINCT `$col` FROM `tbl_cachelite_invalid`
-						WHERE `$col` = $id"
-				));
+
+				return Symphony::Database()
+					->select([$col])
+					->distinct()
+					->from('tbl_cachelite_invalid')
+					->where([$col => $id])
+					->execute()
+					->rows();
 			} catch (Exception $ex) {
 				Symphony::Log()->pushExceptionToLog($ex);
 			}
@@ -693,10 +703,11 @@
 		public function deletePageReferences($url)
 		{
 			try {
-				$url = Symphony::Database()->cleanValue($url);
-				return Symphony::Database()->query(
-					"DELETE FROM `tbl_cachelite_references` WHERE `page` = '$url'"
-				);
+				return Symphony::Database()
+					->delete('tbl_cachelite_references')
+					->where(['page' => $url])
+					->execute()
+					->success();
 			} catch (Exception $ex) {
 				Symphony::Log()->pushExceptionToLog($ex);
 			}
@@ -705,28 +716,36 @@
 
 		protected function saveReferences($reference, $url, $ids)
 		{
-			try {
-				$now = DateTimeObj::get('Y-m-d H:i:s');
-				$values = array();
-				foreach ($ids as $id) {
+			$now = DateTimeObj::get('Y-m-d H:i:s');
+			$values = array();
+			$result = true;
+			foreach ($ids as $id) {
+				try {
 					$id = General::intval($id);
-					$values[] = "('$url', $id, '$now')";
+
+					$thisResult = Symphony::Database()
+						->insert('tbl_cachelite_references')
+						->values([
+							'page' => $url,
+							$reference => $id,
+							'timestamp' => $now,
+						])
+						->updateOnDuplicateKey()
+						->execute()
+						->success();
+					if (!$thisResult) {
+						$result = false;
+					}
+				} catch (Exception $ex) {
+					$result = false;
+					Symphony::Log()->pushExceptionToLog($ex);
 				}
-				$values = implode(',', $values);
-				return Symphony::Database()->query(
-					"INSERT INTO `tbl_cachelite_references` (`page`, `$reference`, `timestamp`)
-						VALUES $values
-						ON DUPLICATE KEY UPDATE `timestamp` = '$now'"
-				);
-			} catch (Exception $ex) {
-				Symphony::Log()->pushExceptionToLog($ex);
 			}
-			return false;
+			return $result;
 		}
 
 		protected function savePageReferences($url, array $sections, array $entries)
 		{
-			$url = Symphony::Database()->cleanValue($url);
 			// Create sections rows
 			$sections = $this->saveReferences('section_id', $url, $sections);
 			// Create entries rows
@@ -738,12 +757,14 @@
 		{
 			$col = $type == 'entry' ? 'entry_id' : 'section_id';
 			try {
-				$id = General::intval(Symphony::Database()->cleanValue($id));
-				return Symphony::Database()->query(
-					"INSERT INTO `tbl_cachelite_invalid` (`$col`)
-						VALUES ($id)
-						ON DUPLICATE KEY UPDATE `$col` = `$col`"
-				);
+				return Symphony::Database()
+					->insert('tbl_cachelite_invalid')
+					->values([
+						$col => $id,
+					])
+					->updateOnDuplicateKey()
+					->execute()
+					->success();
 			} catch (Exception $ex) {
 				Symphony::Log()->pushExceptionToLog($ex);
 				throw $ex;
@@ -754,52 +775,100 @@
 		protected function createPageTable()
 		{
 			// Create extension table
-			return Symphony::Database()->query("
-				CREATE TABLE `tbl_cachelite_references` (
-				  `page` char(128) NOT NULL,
-				  `section_id` int(11) NOT NULL default 0,
-				  `entry_id` int(11) NOT NULL default 0,
-				  `timestamp` datetime NOT NULL /*!50600 default CURRENT_TIMESTAMP */,
-				  PRIMARY KEY (`page`, `section_id`, `entry_id`),
-				  KEY `page` (`page`),
-				  KEY `section_page` (`page`, `section_id`),
-				  KEY `entry_page` (`page`, `entry_id`)
-				) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci
-			");
+			return Symphony::Database()
+				->create('tbl_cachelite_references')
+				->ifNotExists()
+				->fields([
+					'page' => 'char(128)',
+					'section_id' => [
+						'type' => 'int(11)',
+						'default' => 0,
+					],
+					'entry_id' => [
+						'type' => 'int(11)',
+						'default' => 0,
+					],
+					'timestamp' => 'datetime',
+				])
+				->keys([
+					'page_section_entry' => [
+						'type' => 'primary',
+						'cols' => ['page', 'section_id', 'entry_id'],
+					],
+					'page' => 'key',
+					'section_page' => [
+						'type' => 'key',
+						'cols' => ['page', 'section_id'],
+					],
+					'entry_page' => [
+						'type' => 'key',
+						'cols' => ['page', 'entry_id'],
+					],
+				])
+				->execute()
+				->success();
 		}
 
 		protected function createInvalidTable()
 		{
 			// Create extension table
-			return Symphony::Database()->query("
-				CREATE TABLE `tbl_cachelite_invalid` (
-				  `section_id` int(11) NOT NULL default 0,
-				  `entry_id` int(11) NOT NULL default 0,
-				  PRIMARY KEY (`section_id`, `entry_id`),
-				  KEY `section_id` (`section_id`),
-				  KEY `entry_id` (`entry_id`)
-				) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci
-			");
+			return Symphony::Database()
+				->create('tbl_cachelite_invalid')
+				->ifNotExists()
+				->fields([
+					'section_id' => [
+						'type' => 'int(11)',
+						'default' => 0,
+					],
+					'entry_id' => [
+						'type' => 'int(11)',
+						'default' => 0,
+					],
+				])
+				->keys([
+					'section_entry' => [
+						'type' => 'primary',
+						'cols' => ['section_id', 'entry_id'],
+					],
+					'section_id' => 'key',
+					'entry_id' => 'key',
+				])
+				->execute()
+				->success();
 		}
 
 		public function dropPageTable()
 		{
-			return Symphony::Database()->query("DROP TABLE IF EXISTS `tbl_cachelite_references`");
+			return Symphony::Database()
+				->drop('tbl_cachelite_references')
+				->ifExists()
+				->execute()
+				->success();
 		}
 
 		public function dropInvalidTable()
 		{
-			return Symphony::Database()->query("DROP TABLE IF EXISTS `tbl_cachelite_invalid`");
+			return Symphony::Database()
+				->drop('tbl_cachelite_invalid')
+				->ifExists()
+				->execute()
+				->success();
 		}
 
 		public function optimizePageTable()
 		{
-			return Symphony::Database()->query("OPTIMIZE TABLE `tbl_cachelite_references`");
+			return Symphony::Database()
+				->optimize('tbl_cachelite_references')
+				->execute()
+				->success();
 		}
 
 		public function optimizeInvalidTable()
 		{
-			return Symphony::Database()->query("OPTIMIZE TABLE `tbl_cachelite_invalid`");
+			return Symphony::Database()
+				->optimize('tbl_cachelite_invalid')
+				->execute()
+				->success();
 		}
 
 		/*-------------------------------------------------------------------------

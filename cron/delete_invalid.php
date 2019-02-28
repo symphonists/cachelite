@@ -22,9 +22,13 @@ require_once(DOCROOT . '/extensions/cachelite/extension.driver.php');
 $ext = new Extension_cachelite;
 
 while (true) {
-	$next = Symphony::Database()->fetch(
-		"SELECT * FROM `tbl_cachelite_invalid` LIMIT 1"
-	);
+	$next = Symphony::Database()
+		->select(['*'])
+		->from('tbl_cachelite_invalid')
+		->limit(1)
+		->execute()
+		->rows();
+
 	if (empty($next)) {
 		break;
 	}
@@ -49,10 +53,14 @@ while (true) {
 		sleep(1);
 		echo '. Done.' . PHP_EOL;
 	}
-	Symphony::Database()->delete(
-		'tbl_cachelite_invalid',
-		" `section_id` = $section_id AND `entry_id` = $entry_id"
-	);
+
+	Symphony::Database()
+		->delete('tbl_cachelite_invalid')
+		->where(['section_id' => $section_id])
+		->where(['entry_id' => $entry_id])
+		->execute()
+		->success();
+
 	sleep(1);
 }
 
