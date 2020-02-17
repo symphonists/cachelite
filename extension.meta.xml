@@ -16,6 +16,9 @@
 		</author>
 	</authors>
 	<releases>
+		<release version="2.2.0" date="2020-12-17" min="2.6.x" max="2.x.x">
+			- Add a BYPASS value in the header when an extension forces cache bypass
+		</release>
 		<release version="2.1.2" date="2018-08-29" min="2.6.x" max="2.x.x">
 			- Fix crash on deleting entries
 		</release>
