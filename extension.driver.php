@@ -91,6 +91,11 @@
 					'callback'	=> 'writePageCache'
 				),
 				array(
+					'page'		=> '/frontend/',
+					'delegate'	=> 'FrontendPreRenderHeaders',
+					'callback'	=> 'preRenderHeaders'
+				),
+				array(
 					'page' => '/system/preferences/',
 					'delegate' => 'AddCustomPreferenceFieldsets',
 					'callback' => 'appendPreferences'
@@ -181,6 +186,13 @@
 				'bypass' => &$cachebypass,
 			));
 			return $cachebypass;
+		}
+
+		public function preRenderHeaders(array $context)
+		{
+			if ($this->extensionCacheBypass()) {
+				Frontend::Page()->addHeaderToPage('X-Cache-Status', 'BYPASS');
+			}
 		}
 
 		/*-------------------------------------------------------------------------
